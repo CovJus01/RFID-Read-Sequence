@@ -20,7 +20,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -242,7 +242,7 @@ TMR_Status TMR_SR_parseMetadataFromMessage(TMR_Reader *reader, TMR_TagReadData *
 TMR_Status extractGen2MemoryBankValues(TMR_TagReadData *read);
 #endif /* TMR_ENABLE_UHF */
 
-TMR_Status 
+TMR_Status
 TMR_SR_parseMetadataOnly(TMR_Reader *reader, TMR_TagReadData *read, uint16_t flags,
                                 uint8_t *i, uint8_t msg[]);
 void TMR_SR_postprocessReaderSpecificMetadata(TMR_TagReadData *read,
@@ -274,7 +274,7 @@ typedef struct TMR_SR_PortDetect
 
 /**
  * Reader statistics options enum
- */ 
+ */
 typedef enum TMR_SR_ReaderStatsOption
 {
   /* Get statistics specified by the statistics flag */
@@ -284,7 +284,7 @@ typedef enum TMR_SR_ReaderStatsOption
   /* Get the per-port statistics specified by the statistics flag*/
   TMR_SR_READER_STATS_OPTION_GET_PER_PORT = 0x02,
 }TMR_SR_ReaderStatsOption;
-  
+
 #ifdef TMR_ENABLE_UHF
 /**
  *  Reader Statistics Flag Enum
@@ -298,7 +298,7 @@ typedef enum TMR_SR_ReaderStatisticsFlag
   /* Detected noise floor with transmitter on. Recomputed when requested, not resettable. */
   TMR_SR_READER_STATS_FLAG_NOISE_FLOOR_TX_ON = (1<<3),
   /* ALL */
-  TMR_SR_READER_STATS_ALL = (TMR_SR_READER_STATS_FLAG_RF_ON_TIME | 
+  TMR_SR_READER_STATS_ALL = (TMR_SR_READER_STATS_FLAG_RF_ON_TIME |
       TMR_SR_READER_STATS_FLAG_NOISE_FLOOR |
       TMR_SR_READER_STATS_FLAG_NOISE_FLOOR_TX_ON),
 }TMR_SR_ReaderStatisticsFlag;
@@ -437,7 +437,7 @@ typedef enum TMR_SR_Configuration
   TMR_SR_CONFIGURATION_READ_FILTER_TIMEOUT        = 0x0D,
   /**
     * Transport (bus) type
-    **/ 
+    **/
   TMR_SR_CONFIGURATION_CURRENT_MSG_TRANSPORT      = 0x0E,
   /**
    * Enable the CRC calculation
@@ -718,14 +718,14 @@ TMR_Status TMR_SR_setSerialBaudRate(TMR_Reader *reader, uint32_t rate);
 TMR_Status TMR_SR_cmdVersion(TMR_Reader *reader, TMR_SR_VersionInfo *info);
 TMR_Status TMR_SR_cmdBootFirmware(TMR_Reader *reader);
 TMR_Status TMR_SR_cmdSetBaudRate(TMR_Reader *reader, uint32_t rate);
-TMR_Status TMR_SR_cmdEraseFlash(TMR_Reader *reader, uint8_t sector, 
+TMR_Status TMR_SR_cmdEraseFlash(TMR_Reader *reader, uint8_t sector,
             uint32_t password);
-TMR_Status TMR_SR_cmdWriteFlashSector(TMR_Reader *reader, uint8_t sector, 
+TMR_Status TMR_SR_cmdWriteFlashSector(TMR_Reader *reader, uint8_t sector,
             uint32_t address, uint32_t password, uint8_t length,
             const uint8_t data[], uint32_t offset);
 #ifdef TMR_ENABLE_UHF
 TMR_Status TMR_SR_cmdVerifyImage(TMR_Reader *reader, bool *status);
-TMR_Status TMR_SR_cmdModifyFlashSector(TMR_Reader *reader, uint8_t sector, 
+TMR_Status TMR_SR_cmdModifyFlashSector(TMR_Reader *reader, uint8_t sector,
             uint32_t address, uint32_t password, uint8_t length,
             const uint8_t data[], uint32_t offset);
 #endif /* TMR_ENABLE_UHF */
@@ -735,8 +735,8 @@ TMR_Status TMR_SR_cmdGetHardwareVersion(TMR_Reader *reader, uint8_t option,
 TMR_Status TMR_SR_cmdGetCurrentProgram(TMR_Reader *reader, uint8_t *program);
 
 #ifdef TMR_ENABLE_UHF
-TMR_Status TMR_SR_cmdReadTagSingle(TMR_Reader *reader, uint16_t timeout, 
-            uint16_t metadataFlags, const TMR_TagFilter *filter, 
+TMR_Status TMR_SR_cmdReadTagSingle(TMR_Reader *reader, uint16_t timeout,
+            uint16_t metadataFlags, const TMR_TagFilter *filter,
             TMR_TagProtocol protocol, TMR_TagReadData *tagData);
 #endif /* TMR_ENABLE_UHF */
 TMR_Status TMR_SR_cmdReadTagMultiple(TMR_Reader *reader, uint16_t timeout,
@@ -746,7 +746,7 @@ TMR_Status TMR_SR_cmdReadTagMultiple(TMR_Reader *reader, uint16_t timeout,
 #ifdef TMR_ENABLE_UHF
 TMR_Status TMR_SR_cmdWriteGen2TagEpc(TMR_Reader *reader, const TMR_TagFilter *filter, TMR_GEN2_Password accessPassword,
 			uint16_t timeout, uint8_t count, const uint8_t *id, bool lock, TMR_uint8List* response);
-TMR_Status TMR_SR_cmdReadAfterWriteGen2TagEpc(TMR_Reader *reader, const TMR_TagFilter *filter, TMR_GEN2_Password accessPassword, 
+TMR_Status TMR_SR_cmdReadAfterWriteGen2TagEpc(TMR_Reader *reader, const TMR_TagFilter *filter, TMR_GEN2_Password accessPassword,
             uint16_t timeout, uint8_t count, const uint8_t *id, bool lock, uint32_t readBank,
             uint32_t readAddress, uint8_t readLen, TMR_TagReadData *read);
 TMR_Status TMR_SR_cmdGEN2WriteTagData(TMR_Reader *reader,
@@ -756,8 +756,8 @@ TMR_Status TMR_SR_cmdGEN2WriteTagData(TMR_Reader *reader,
 TMR_Status TMR_SR_cmdGEN2ReadAfterWriteTagData(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Bank writeBank, uint32_t writeAddress,
             uint16_t count, const uint8_t data[], TMR_GEN2_Password accessPassword, const TMR_TagFilter *filter,
             TMR_GEN2_Bank readBank, uint32_t readAddress, uint8_t readLen, TMR_TagReadData *read);
-TMR_Status TMR_SR_cmdGEN2LockTag(TMR_Reader *reader, uint16_t timeout, 
-            uint16_t mask, uint16_t action, TMR_GEN2_Password accessPassword, 
+TMR_Status TMR_SR_cmdGEN2LockTag(TMR_Reader *reader, uint16_t timeout,
+            uint16_t mask, uint16_t action, TMR_GEN2_Password accessPassword,
             const TMR_TagFilter *filter);
 TMR_Status TMR_SR_cmdKillTag(TMR_Reader *reader, uint16_t timeout,
             TMR_GEN2_Password killPassword, const TMR_TagFilter *filter);
@@ -774,14 +774,14 @@ TMR_Status TMR_SR_cmdClearTagBuffer(TMR_Reader *reader);
 
 #ifdef TMR_ENABLE_UHF
 TMR_Status TMR_SR_cmdHiggs2PartialLoadImage(TMR_Reader *reader, uint16_t timeout,
-            TMR_GEN2_Password accessPassword, TMR_GEN2_Password killPassword, 
+            TMR_GEN2_Password accessPassword, TMR_GEN2_Password killPassword,
             uint8_t len, const uint8_t epc[], TMR_TagFilter* target);
 TMR_Status TMR_SR_cmdHiggs2FullLoadImage(TMR_Reader *reader, uint16_t timeout,
             TMR_GEN2_Password accessPassword, TMR_GEN2_Password killPassword,
             uint16_t lockBits, uint16_t pcWord, uint8_t count,
             const uint8_t epc[], TMR_TagFilter* target);
 TMR_Status TMR_SR_cmdHiggs3FastLoadImage(TMR_Reader *reader, uint16_t timeout,
-            TMR_GEN2_Password currentAccessPassword, 
+            TMR_GEN2_Password currentAccessPassword,
             TMR_GEN2_Password accessPassword, TMR_GEN2_Password killPassword,
             uint16_t pcWord, uint8_t count, const uint8_t epc[], TMR_TagFilter* target);
 TMR_Status TMR_SR_cmdHiggs3LoadImage(TMR_Reader *reader, uint16_t timeout,
@@ -855,7 +855,7 @@ TMR_Status TMR_SR_cmdSL900aAccessFifoRead(TMR_Reader *reader, uint16_t timeout, 
             uint32_t password, PasswordLevel level, AccessFifoOperation operation, uint8_t length,TMR_uint8List * data, TMR_TagFilter* target);
 TMR_Status TMR_SR_cmdSL900aAccessFifoWrite(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint8_t CommandCode,
            uint32_t password, PasswordLevel level, AccessFifoOperation operation, TMR_uint8List *payLoad, TMR_uint8List * data, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_cmdFDNReadREG(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint16_t RegAddress, TMR_TagFilter* target, TMR_uint8List *data);
 TMR_Status
 TMR_SR_cmdFDNWriteREG(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint16_t RegAddress,uint16_t RegWriteData, TMR_TagFilter* target, TMR_uint8List *data);
@@ -865,15 +865,15 @@ TMR_Status
 TMR_SR_cmdFDNStartStopLOG(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint8_t CmdCfg, uint32_t FlagResetPassword, TMR_TagFilter* target, TMR_uint8List *data);
 TMR_Status
 TMR_SR_cmdFDNAuth(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint8_t CmdCfg, uint32_t AuthPassword, TMR_TagFilter* target, TMR_uint8List *data);
-TMR_Status 
+TMR_Status
 TMR_SR_cmdFDNReadMEM(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint16_t StartAddress, uint16_t len, TMR_TagFilter* target, TMR_uint8List *data);
-TMR_Status 
-TMR_SR_cmdFDNWriteMEM(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint16_t StartAddress, 
+TMR_Status
+TMR_SR_cmdFDNWriteMEM(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint16_t StartAddress,
                       uint16_t len, const uint8_t* Writedatadata, TMR_TagFilter* target, TMR_uint8List *data);
 TMR_Status
 TMR_SR_cmdFDNStateCheck(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                         uint16_t len, const uint8_t* Data, TMR_TagFilter* target, TMR_uint8List *data);
-TMR_Status 
+TMR_Status
 TMR_SR_cmdFDNMeasure(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                       uint8_t CmdCfg, uint8_t StoreBlockAddress, TMR_TagFilter* target, TMR_uint8List *data);
 TMR_Status
@@ -946,7 +946,7 @@ TMR_Status TMR_SR_cmdGetRegionConfiguration(TMR_Reader *reader,
             TMR_SR_RegionConfiguration key, void *value);
 #endif /* TMR_ENABLE_UHF */
 TMR_Status TMR_SR_cmdGetPowerMode(TMR_Reader *reader, TMR_SR_PowerMode *mode);
-#ifdef TMR_ENABLE_UHF 
+#ifdef TMR_ENABLE_UHF
 TMR_Status TMR_SR_cmdGetUserMode(TMR_Reader *reader, TMR_SR_UserMode *mode);
 #endif /* TMR_ENABLE_UHF */
 TMR_Status TMR_SR_cmdGetReaderConfiguration(TMR_Reader *reader,
@@ -1022,9 +1022,9 @@ TMR_Status TMR_SR_cmdSetPowerMode(TMR_Reader *reader, TMR_SR_PowerMode mode);
 TMR_Status TMR_SR_cmdSetUserMode(TMR_Reader *reader, TMR_SR_UserMode mode);
 #endif /* TMR_ENABLE_UHF */
 
-TMR_Status TMR_SR_cmdSetReaderConfiguration(TMR_Reader *reader, 
+TMR_Status TMR_SR_cmdSetReaderConfiguration(TMR_Reader *reader,
             TMR_SR_Configuration key, const void *value);
-TMR_Status TMR_SR_cmdSetProtocolLicenseKey(TMR_Reader *reader, 
+TMR_Status TMR_SR_cmdSetProtocolLicenseKey(TMR_Reader *reader,
             TMR_SR_SetProtocolLicenseOption option, uint8_t key[], int key_len);
 TMR_Status TMR_SR_cmdSetProtocolConfiguration(TMR_Reader *reader,
             TMR_TagProtocol protocol, TMR_SR_ProtocolConfiguration key,
@@ -1041,13 +1041,13 @@ TMR_Status TMR_SR_cmdTestSendPrbs(TMR_Reader *reader, uint16_t duration);
 TMR_Status TMR_SR_cmdSetUserProfile(TMR_Reader *reader,
                                     TMR_SR_UserConfigOperation op,TMR_SR_UserConfigCategory category, TMR_SR_UserConfigType type);
 #ifdef TMR_ENABLE_UHF
-TMR_Status TMR_SR_cmdGetUserProfile(TMR_Reader *reader, 
+TMR_Status TMR_SR_cmdGetUserProfile(TMR_Reader *reader,
                                     uint8_t byte[], uint8_t length, uint8_t response[], uint8_t* response_length);
-TMR_Status TMR_SR_cmdBlockWrite(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Bank bank, uint32_t wordPtr, 
+TMR_Status TMR_SR_cmdBlockWrite(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Bank bank, uint32_t wordPtr,
                                  uint32_t wordCount, const uint16_t* data, uint32_t accessPassword, const TMR_TagFilter* target);
 TMR_Status TMR_SR_cmdBlockErase(TMR_Reader *reader, uint16_t timeout, TMR_GEN2_Bank bank, uint32_t wordPtr,
                                  uint8_t wordCount, uint32_t accessPassword, TMR_TagFilter *target);
-TMR_Status TMR_SR_cmdBlockPermaLock(TMR_Reader *reader, uint16_t timeout,uint32_t readLock, TMR_GEN2_Bank bank, 
+TMR_Status TMR_SR_cmdBlockPermaLock(TMR_Reader *reader, uint16_t timeout,uint32_t readLock, TMR_GEN2_Bank bank,
                          uint32_t blockPtr, uint32_t blockRange, uint16_t* mask, uint32_t accessPassword, TMR_TagFilter* target, TMR_uint8List *data);
 #endif /* TMR_ENABLE_UHF */
 
@@ -1084,99 +1084,99 @@ TMR_Status
 TMR_SR_msgAddGEN2BlockErase(uint8_t *msg, uint8_t *i, uint16_t timeout, uint32_t wordPtr, TMR_GEN2_Bank bank,
                             uint8_t wordCount, uint32_t accessPassword, TMR_TagFilter* target);
 
-void 
-TMR_SR_msgAddHiggs2PartialLoadImage(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, 
+void
+TMR_SR_msgAddHiggs2PartialLoadImage(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                     TMR_GEN2_Password killPassword, uint8_t len, const uint8_t *epc, TMR_TagFilter* target);
-void 
+void
 TMR_SR_msgAddHiggs2FullLoadImage(uint8_t *msg, uint8_t *i, uint16_t timeout,
       TMR_GEN2_Password accessPassword, TMR_GEN2_Password killPassword, uint16_t lockBits, uint16_t pcWord, uint8_t len, const uint8_t *epc, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddHiggs3FastLoadImage(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password currentAccessPassword,
       TMR_GEN2_Password accessPassword, TMR_GEN2_Password killPassword, uint16_t pcWord, uint8_t len, const uint8_t *epc, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddHiggs3LoadImage(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password currentAccessPassword,
       TMR_GEN2_Password accessPassword, TMR_GEN2_Password killPassword, uint16_t pcWord, uint8_t len, const uint8_t *epcAndUserData, TMR_TagFilter* target);
 
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddHiggs3BlockReadLock(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint8_t lockBits, TMR_TagFilter* target);
 
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddNXPSetReadProtect(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_SR_GEN2_SiliconType chip,
                             TMR_GEN2_Password accessPassword, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddNXPResetReadProtect(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_SR_GEN2_SiliconType chip,
                             TMR_GEN2_Password accessPassword, TMR_TagFilter* target);
 TMR_Status
 TMR_SR_msgAddNXPChangeEAS(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_SR_GEN2_SiliconType chip,
                           TMR_GEN2_Password accessPassword, bool reset, TMR_TagFilter* target);
-void 
+void
 TMR_SR_msgAddNXPEASAlarm(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_SR_GEN2_SiliconType chip,
                          TMR_GEN2_DivideRatio dr, TMR_GEN2_TagEncoding m, TMR_GEN2_TrExt trExt, TMR_TagFilter* target);
 TMR_Status
 TMR_SR_msgAddIAVDenatranCustomOp(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                          uint8_t mode, uint8_t rfu, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIAVDenatranCustomActivateSiniavMode(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                          uint8_t mode, uint8_t payload, TMR_TagFilter* target, bool tokenDesc, uint8_t *token);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIAVDenatranCustomReadFromMemMap(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                         uint8_t mode, uint8_t payload, TMR_TagFilter* target, uint16_t wordAddress);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIAVDenatranCustomWriteToMemMap(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                         uint8_t mode, uint8_t payload, TMR_TagFilter* target, uint16_t wordPtr, uint16_t wordData, uint8_t* tagId, uint8_t* dataBuf);
 TMR_Status
 TMR_SR_msgAddIAVDenatranCustomWriteSec(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                         uint8_t mode, uint8_t payload, TMR_TagFilter* target, uint8_t* data, uint8_t* dataBuf);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIAVDenatranCustomGetTokenId(uint8_t *msg, uint8_t *i, uint16_t timeout,
                         TMR_GEN2_Password accessPassword, uint8_t mode, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIAVDenatranCustomReadSec(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                         uint8_t mode, uint8_t payload, TMR_TagFilter* target, uint16_t wordAddress);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddNXPCalibrate(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_SR_GEN2_SiliconType chip,
                          TMR_GEN2_Password accessPassword, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddNXPChangeConfig(uint8_t *msg, uint8_t *i, uint16_t timeout,
                          TMR_SR_GEN2_SiliconType chip, TMR_GEN2_Password accessPassword, TMR_NXP_ConfigWord configword, TMR_TagFilter* target);
-TMR_Status 
-TMR_SR_msgAddGen2v2NxpUntraceable(uint8_t *msg, uint8_t *i, uint16_t timeout, 
+TMR_Status
+TMR_SR_msgAddGen2v2NxpUntraceable(uint8_t *msg, uint8_t *i, uint16_t timeout,
                               TMR_SR_GEN2_SiliconType chip, TMR_GEN2_Password accessPassword, uint16_t configWord, TMR_TagOp_GEN2_NXP_Untraceable op , TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddGen2v2NxpAuthenticate(uint8_t *msg, uint8_t *i, uint16_t timeout,
                                TMR_SR_GEN2_SiliconType chip, TMR_GEN2_Password accessPassword, TMR_TagOp_GEN2_NXP_Authenticate op , TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddGen2v2NxpReadBuffer(uint8_t *msg, uint8_t *i, uint16_t timeout,
                              TMR_SR_GEN2_SiliconType chip, TMR_GEN2_Password accessPassword, TMR_TagOp_GEN2_NXP_Readbuffer op , TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddNXPUCODE7ChangeConfig(uint8_t *msg, uint8_t *i, uint16_t timeout,
                          TMR_SR_GEN2_SiliconType chip, TMR_GEN2_Password accessPassword, TMR_NXP_UCODE7_ConfigWord configword, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddMonza4QTReadWrite(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                TMR_Monza4_ControlByte controlByte, TMR_Monza4_Payload payload, TMR_TagFilter* target);
 
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddMonza6MarginRead(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                TMR_GEN2_Bank bank, uint32_t bitAddress, uint16_t maskBitLength, uint8_t * mask, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aGetSensorValue(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                      uint8_t CommandCode, uint32_t password, PasswordLevel level, Sensor sensortype,
                                      TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aGetMeasurementSetup(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                           uint8_t CommandCode, uint32_t password, PasswordLevel level, TMR_TagFilter* target);
 
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aGetCalibrationData(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                      uint8_t CommandCode, uint32_t password, PasswordLevel level, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aSetCalibrationData(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                           uint8_t CommandCode, uint32_t password, PasswordLevel level, uint64_t calibration, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aSetSfeParameters(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                           uint8_t CommandCode, uint32_t password, PasswordLevel level, uint16_t sfe,
                                           TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aGetLogState(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                   uint8_t CommandCode, uint32_t password, PasswordLevel level, TMR_TagFilter* target);
 TMR_Status
@@ -1184,11 +1184,11 @@ TMR_SR_msgAddIdsSL900aSetLogMode(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR
                                  uint8_t CommandCode, uint32_t password, PasswordLevel level, LoggingForm form,
                                  StorageRule rule, bool Ext1Enable, bool Ext2Enable, bool TempEnable, bool BattEnable,
                                  uint16_t LogInterval, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aSetLogLimit(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                   uint8_t CommandCode, uint32_t password, PasswordLevel level, uint16_t exLower,
                                   uint16_t lower, uint16_t upper, uint16_t exUpper, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aSetShelfLife(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                    uint8_t CommandCode, uint32_t password, PasswordLevel level, uint32_t block0, uint32_t block1,
                                    TMR_TagFilter* target);
@@ -1203,52 +1203,52 @@ TMR_Status
 TMR_SR_msgAddIdsSL900aSetPassword(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                   uint8_t CommandCode, uint32_t password, PasswordLevel level, uint32_t newPassword,
                                   PasswordLevel newPasswordLevel, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aAccessFifoStatus(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                   uint8_t CommandCode, uint32_t password, PasswordLevel level, AccessFifoOperation operation,
                                   TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aGetBatteryLevel(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                       uint8_t CommandCode, uint32_t password, PasswordLevel level, BatteryType batteryType,
                                       TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aAccessFifoRead(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                   uint8_t CommandCode, uint32_t password, PasswordLevel level, AccessFifoOperation operation,
                                   uint8_t length, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aAccessFifoWrite(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                   uint8_t CommandCode, uint32_t password, PasswordLevel level, AccessFifoOperation operation,
                                   TMR_uint8List *payLoad, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddIdsSL900aStartLog(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                                uint8_t CommandCode, uint32_t password, PasswordLevel level, uint32_t time, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddFDNReadREG(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint16_t RegAddress, TMR_TagFilter* target);
-TMR_Status 
-TMR_SR_msgAddFDNWriteREG(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, 
+TMR_Status
+TMR_SR_msgAddFDNWriteREG(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                          uint16_t RegAddress, uint16_t  RegWriteData, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddFDNLoadREG(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, uint8_t CmdCfg, TMR_TagFilter* target);
-TMR_Status 
-TMR_SR_msgAddFDNStartStopLOG(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, 
+TMR_Status
+TMR_SR_msgAddFDNStartStopLOG(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                              uint8_t CmdCfg, uint32_t FlagResetPassword, TMR_TagFilter* target);
-TMR_Status 
-TMR_SR_msgAddFDNAuth(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode, 
+TMR_Status
+TMR_SR_msgAddFDNAuth(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                              uint8_t CmdCfg, uint32_t AuthPassword, TMR_TagFilter* target);
-TMR_Status 
-TMR_SR_msgAddFDNReadMEM(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, 
+TMR_Status
+TMR_SR_msgAddFDNReadMEM(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                         uint16_t CommandCode, uint16_t StartAddress, uint16_t len, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddFDNStateCheck(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                            uint16_t len, const uint8_t* data, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddFDNWriteMEM(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                          uint16_t StartAddress, uint16_t len, const uint8_t* data, TMR_TagFilter* target);
-TMR_Status 
+TMR_Status
 TMR_SR_msgAddFDNMeasure(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, uint16_t CommandCode,
                          uint8_t CmdCfg, uint8_t StoreBlockAddress, TMR_TagFilter* target);
 TMR_Status
-TMR_SR_msgAddILIANTagSelect(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword, 
+TMR_SR_msgAddILIANTagSelect(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
                          uint16_t CommandCode, TMR_TagFilter* target);
 TMR_Status
 TMR_SR_msgAddEM4325GetSensorData(uint8_t *msg, uint8_t *i, uint16_t timeout, TMR_GEN2_Password accessPassword,
@@ -1277,7 +1277,7 @@ TMR_Status TMR_SR_cmdSetReaderWriteTimeOut (struct TMR_Reader *reader, TMR_TagPr
 TMR_Status TMR_SR_cmdAuthReqResponse(struct TMR_Reader *reader, TMR_TagAuthentication *auth);
 TMR_Status TMR_SR_cmdSetRegulatoryTest(struct TMR_Reader *reader, bool enable);
 #endif /* TMR_ENABLE_UHF */
-TMR_Status TMR_SR_addTagOp(struct TMR_Reader *reader, TMR_TagOp *tagop,TMR_ReadPlan *rp, 
+TMR_Status TMR_SR_addTagOp(struct TMR_Reader *reader, TMR_TagOp *tagop,TMR_ReadPlan *rp,
                              uint8_t *msg, uint8_t *i, uint32_t readTimeMs, uint8_t *lenbyte);
 void
 TMR_parseTagStats(TMR_Reader* reader, TMR_Reader_StatsValues* stats,
@@ -1292,7 +1292,7 @@ TMR_Status
 TMR_SR_cmdrebootReader(TMR_Reader *reader);
 TMR_Status
 prepForSearch(TMR_Reader *reader, TMR_ReadPlan *rp);
-TMR_Status 
+TMR_Status
 TMR_SR_msgSetupMultipleProtocolSearch(TMR_Reader *reader, uint8_t *msg, TMR_SR_OpCode op, TMR_TagProtocolList *protocols, TMR_TRD_MetadataFlag metadataFlags, TMR_SR_SearchFlag antennas, TMR_TagFilter **filter, uint16_t timeout);
 TMR_Status TMR_SR_cmdProbeBaudRate(TMR_Reader *reader, uint32_t *currentBaudRate);
 TMR_Status TMR_SR_getVersion(TMR_Reader* reader);
@@ -1310,7 +1310,7 @@ TMR_SR_cmdSetProtocolList(TMR_Reader *reader, TMR_TagProtocolList *protocols);
 TMR_Status
 TMR_SR_cmdGetProtocolList(TMR_Reader *reader, TMR_TagProtocolList *protocols);
 TMR_Status
-TMR_SR_cmdWriteMemory(TMR_Reader *reader, TMR_ExtTagOp *tagOp, 
+TMR_SR_cmdWriteMemory(TMR_Reader *reader, TMR_ExtTagOp *tagOp,
                         const TMR_TagFilter *filter, TMR_uint8List tagOpExtParams, TMR_uint8List* data);
 TMR_Status
 TMR_SR_cmdReadMemory(TMR_Reader *reader, TMR_ExtTagOp *tagOp, const TMR_TagFilter *filter,
@@ -1329,7 +1329,7 @@ TMR_Status
 TMR_SR_msgAddExtendedParams(uint8_t *msg, uint8_t *i, uint8_t *optbyte, const TMR_uint8List *extParams);
 #endif /* TMR_ENABLE_EXTENDED_TAGOPS */
 void
-TMR_SR_msgAddAccessPassword(uint8_t* msg,  uint8_t* i, uint8_t* optbyte, 
+TMR_SR_msgAddAccessPassword(uint8_t* msg,  uint8_t* i, uint8_t* optbyte,
                               const TMR_uint8List *accessPassword);
 #endif /* TMR_ENABLE_HF_LF */
 
