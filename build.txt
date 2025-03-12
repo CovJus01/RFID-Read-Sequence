@@ -1,0 +1,1 @@
+gcc -D TMR_ENABLE_SERIAL_READER_ONLY=1 -g -fPIC -I./include -o SmartTagSystem SmartTagSystem.c DB_utils.c checkout_utils.c RFID_Utils.c sqlite3.c -lmercuryapi -lreadline -lpthread

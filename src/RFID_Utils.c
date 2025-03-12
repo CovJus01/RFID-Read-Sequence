@@ -8,10 +8,6 @@
 *
 **/
 
-//API files
-#include "../c/src/api/serial_reader_imp.h"
-#include "../c/src/api/tm_reader.h"
-#include "../c/src/api/tmr_utils.h"
 
 //Other
 #include <time.h>
@@ -20,6 +16,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <inttypes.h>
+#include "RFID_Utils.h"
 
 #define PRINT_TAG_METADATA 0
 #define numberof(x) (sizeof((x))/sizeof((x)[0]))
@@ -32,17 +29,6 @@
                          "Example for HF/LF modules: 'tmr:///com4' \n");}
 
 
-typedef struct {
-    TMR_Reader reader;
-    TMR_Reader *reader_ptr;
-    TMR_Status status;
-    TMR_ReadPlan plan;
-    TMR_Region region;
-    int readpower; //This is a read power of 2000 cdBm which is 20dBm
-    uint8_t *antennaList;
-    uint8_t antennaCount;
-    TMR_TRD_MetadataFlag metadata;
-} reader_info, *reader_info_ptr;
 
 // This is a function to exit the application based on an error
 void error_exit(int exitval, const char *fmt, ...)
@@ -57,6 +43,14 @@ void error_exit(int exitval, const char *fmt, ...)
 
 // This is a function that checks for errors in the reader
 void check_error(TMR_Reader* rp, TMR_Status ret, int exitval, const char *msg)
+{
+  if (TMR_SUCCESS != ret)
+  {
+    error_exit(exitval, "Error %s: %s\n", msg, TMR_strerr(rp, ret));
+  }
+}
+
+void checkerr(TMR_Reader* rp, TMR_Status ret, int exitval, const char *msg)
 {
   if (TMR_SUCCESS != ret)
   {
@@ -156,6 +150,7 @@ void initialize_reader(reader_info_ptr info_ptr, int argc, char* argv[]) {
     ret = TMR_create(rp, argv[1]);
     check_error(rp, ret, 1, "Creating reader object");
 
+    printf("Pointer 1 = %p\n", rp);
     info_ptr->reader = r;
     info_ptr->reader_ptr = rp;
     info_ptr->status = ret;
@@ -175,6 +170,7 @@ void connect_reader(reader_info_ptr info_ptr) {
       char string[100];
       //Attempts to connect to the reader, returns the status of the reader object
 
+      printf("Pointer 2 = %p\n", reader_ptr);
       info_ptr->status = TMR_connect(reader_ptr);
       /* MercuryAPI tries connecting to the module using default baud rate of 115200 bps.
        * The connection may fail if the module is configured to a different baud rate. If
@@ -185,7 +181,6 @@ void connect_reader(reader_info_ptr info_ptr) {
          (TMR_READER_TYPE_SERIAL == reader_ptr->readerType))
       {
         uint32_t currentBaudRate;
-
         /* Start probing mechanism. */
         info_ptr->status = TMR_SR_cmdProbeBaudRate(reader_ptr, &currentBaudRate);
         check_error(reader_ptr, info_ptr->status, 1, "Probe the baudrate");
@@ -204,12 +199,12 @@ void connect_reader(reader_info_ptr info_ptr) {
       {
         check_error(reader_ptr, info_ptr->status, 1, "Connecting reader");
       }
+
         //Initializes some parameter variables and gets them from the now connected Reader
       model.value = string;
       model.max   = sizeof(string);
       TMR_paramGet(reader_ptr, TMR_PARAM_VERSION_MODEL, &model);
       check_error(reader_ptr, info_ptr->status, 1, "Getting version model");
-
             //Gets region data
       info_ptr->region = TMR_REGION_NONE;
       info_ptr->status = TMR_paramGet(reader_ptr, TMR_PARAM_REGION_ID, &info_ptr->region);
@@ -280,25 +275,26 @@ void connect_reader(reader_info_ptr info_ptr) {
 }
 
 
-void read(reader_info_ptr info_ptr) {
+void RFID_read(TMR_Reader * rp) {
 
-    info_ptr->status = TMR_read(info_ptr->reader_ptr, 500, NULL);
-    if (TMR_ERROR_TAG_ID_BUFFER_FULL == info_ptr->status)
+    TMR_Status ret;
+    
+    if (TMR_ERROR_TAG_ID_BUFFER_FULL == ret)
     {
       /* In case of TAG ID Buffer Full, extract the tags present
       * in buffer.
       */
-      fprintf(stdout, "reading tags:%s\n", TMR_strerr(info_ptr->reader_ptr, info_ptr->status));
+      fprintf(stdout, "reading tags:%s\n", TMR_strerr(rp, ret));
     }
     else
     {
-      check_error(info_ptr->reader_ptr, info_ptr->status, 1, "reading tags");
+      check_error(rp, ret, 1, "reading tags");
     }
 }
 
-int read_empty(reader_info_ptr info_ptr) {
+int read_empty(TMR_Reader * rp) {
 
-    if(TMR_SUCCESS != TMR_hasMoreTags(info_ptr->reader_ptr)){
+    if(TMR_SUCCESS != TMR_hasMoreTags(rp)){
         return 1;
     }
 

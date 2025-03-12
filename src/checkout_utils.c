@@ -1,6 +1,6 @@
 // A file that contains random tools for the checkout system
 #include <time.h>
-
+#include "checkout_utils.h"
 void delay(int number_of_seconds)
 {
     // Converting time into milli_seconds
