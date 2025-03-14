@@ -1,0 +1,70 @@
+Libraries, software, and configuration needed for RF signaling
+--------------------------------------------------------------
+
+#Raspberry Pi OS with Debian bullseye 
+Choose legacy OS in RPi imager. Linux kernel 6.6 and later mess up pin organization for the RPi's GPIO pins. Debian bullseye uses an older kernel.
+
+#Enable SPI on RPi (for flashing ATtiny85)
+sudo raspi-config
+
+#Download avrdude (for flashing ATtiny85)
+sudo apt-get install bison automake autoconf flex git gcc
+sudo apt-get install gcc-avr binutils-avr avr-libc
+cd
+git clone https://github.com/kcuzner/avrdude
+cd avrdude/avrdude
+./bootstrap && ./configure && sudo make install
+
+#Download and build WiringPi (for flashing ATtiny85 and compatibility with rc-switch)
+cd ~
+git clone https://github.com/WiringPi/WiringPi
+cd WiringPi
+./build
+
+#Arduino IDE (for writing ATtiny85 code and creating hex files)
+##Downloading
+sudo apt install arduino
+
+##Adding support for ATtiny85
+Open the Arduino IDE.
+
+Go to File > Preferences.
+In the "Additional Board Manager URLs" field, add: https://raw.githubusercontent.com/damellis/attiny/ide-1.6.x-boards-manager/package_damellis_attiny_index.json
+Click OK to save.
+
+Go to Tools > Board > Boards Manager.
+Search for "ATtiny" in the Boards Manager window.
+Click Install for the "attiny by David A. Mellis" package.
+
+Go to Tools > Board and select ATtiny25/45/85.
+Under Tools > Processor, select ATtiny85.
+Set the clock speed to 8 MHz (internal) under Tools > Clock 
+
+#rc-switch (for 433 MHz RF communication)
+##Setup for ATtiny85 in Arduino ide 
+Go to Sketch > Include Library > Manage Libraries...
+In the Library Manager window, type rc-switch into the search bar.
+Select the rc-switch library by sui77.
+Click the Install button
+
+Note! For the ATtiny85 to act as a receiver, comment out '#define RCSwitchDisableReceiving' in ~/Arduino/libraries/rc-switch/RCSwitch.h. The writer of rc-switch thinks the ATtiny cannot do receiving, but it can. 
+
+##Setup for Raspberry Pi
+git clone https://github.com/sui77/rc-switch/
+Ensure #include path is correct in c file for RPi which uses this library, and have RCSwitch.cpp in the list of src files in the Makefile (this should be made already).
+
+#SoftwareServo (for controlling linear actuator servo motor)
+The SoftwareServo library is not availble by default on the arduino ide, but can be added as a zip file
+
+##Get a zip file of the library
+cd ~
+git clone https://github.com/ttseng/SoftwareServo
+cd SoftwareServo
+zip -r SoftwareServo.zip SoftwareServo/
+
+You now have a zip file of the library in ~/SoftwareServo/SoftwareServo.zip
+
+##Add the library to the arduino ide
+In the Arduino IDE, navigate to Sketch > Include Library > Add .ZIP Library. At the top of the drop down list, select the option to "Add .ZIP Library''
+Navigate to the zip file's location and open it
+Return to the Sketch > Include Library menu.You should now see the library at the bottom of the drop-down menu. It is ready to be used
