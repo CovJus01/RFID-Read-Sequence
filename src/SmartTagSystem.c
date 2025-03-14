@@ -67,7 +67,7 @@ void* RFID_thread(void* vargp)
           printf("LISTENING FOR TAGS...\n");
 
           //Read tags
-          ret = TMR_read(rp, 1000, NULL);
+          ret = TMR_read(rp, 500, NULL);
 
           if (TMR_ERROR_TAG_ID_BUFFER_FULL == ret)
           {
@@ -377,13 +377,15 @@ int main(int argc, char *argv[]) {
 
         TMR_getTimeStamp(rp, &trd, timeStr);
         printf("Tag ID: %s\n", idStr);
+        add_tag(db, idStr);
     }
 
 
     printf("FETCHING TAG DATA...\n");
 
     //GET TAG DATA
-    sql_status = get_tags(db);
+    update_tag_item(db, "123", "E2004717BB606026D9990106");
+    sql_status = get_tag(db, "E2004717BB606026D9990106");
 
 
     // SUMMARIZE CHECKOUT INFORMATION
@@ -401,7 +403,6 @@ int main(int argc, char *argv[]) {
             printf("PURCHASE COMPLETE!!!\n");
             //update_database();
             //^^^^This function should just loop over the tag array with the following function
-            sql_status = tag_deactivate(db);
             printf("DATABASE UPDATED.\n");
 
             // SEND RELEASE SIGNAL
