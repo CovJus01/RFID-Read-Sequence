@@ -54,7 +54,7 @@
 //   {
 //     error_exit(exitval, "Error %s: %s\n", msg, TMR_strerr(rp, ret));
 //   }
-// } 
+// }
 int admin_request;
 TMR_Reader r, *rp;
 TMR_Status ret;
@@ -85,7 +85,7 @@ void* RFID_thread(void* vargp)
 
           //Do a 0.5 second delay in between reads
           delay(500);
-      }while(TMR_SUCCESS != TMR_hasMoreTags(rp) && admin_request != 1); 
+      }while(TMR_SUCCESS != TMR_hasMoreTags(rp) && admin_request != 1);
 
     printf("Tags or Admin Request! Hit enter to continue...\n");
 }
@@ -102,7 +102,7 @@ void* input_thread(void* vargp)
 
 
 int main(int argc, char *argv[]) {
-  
+
     // Initialize system variables
     admin_request = 0;
     // Initialize Database variables

@@ -86,7 +86,7 @@ int tag_deactivate(sqlite3 * db, char tagID[]) {
 }
 
 //A function to retrieve the tag details
-int get_tag(sqlite3 * db, char tagID[]) {
+void get_tag(sqlite3 * db, char tagID[], char* itemID,int buffersize) {
 
     int status;
     sqlite3_stmt * statement_ptr;
@@ -104,11 +104,39 @@ int get_tag(sqlite3 * db, char tagID[]) {
     const char *tagID_ret = sqlite3_column_text(statement_ptr, 0);
     const char *itemID_ret = sqlite3_column_text(statement_ptr, 1);
     int status_ret = sqlite3_column_int(statement_ptr,2);
-    printf("Returned TagID:%s\n", tagID_ret);
-    printf("Returned itemID:%s\n", itemID_ret);
-    printf("Returned Status:%d\n", status_ret);
-    
+    strncpy(itemID, itemID_ret, buffersize-1);
     status = sqlite3_finalize(statement_ptr);
 
-    return status;
+
+    itemID[buffersize-1] = '\0';
+}
+
+int get_item(sqlite3 * db,char * itemID) {
+
+
+    int status;
+    sqlite3_stmt * statement_ptr;
+    char command[200];
+
+
+    // Retrieve Item Data
+    strcpy(command,"SELECT itemID,itemDescription,price FROM Items WHERE itemID = '");
+    strcat(command, itemID);
+    strcat(command, "'");
+
+    status = sqlite3_prepare_v2(db,command, -1, &statement_ptr, 0);
+
+    status = sqlite3_step(statement_ptr);
+
+    //Print Item data
+    const char *description = sqlite3_column_text(statement_ptr,1);
+    int price = sqlite3_column_int(statement_ptr,2);
+
+    printf("********************************************\n");
+    printf("%s||\tprice = %d\n", description, price);
+    printf("********************************************\n");
+
+    status = sqlite3_finalize(statement_ptr);
+
+    return price;
 }

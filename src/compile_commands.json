@@ -1,0 +1,87 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g",
+      "-fPIC",
+      "-I./include",
+      "-D",
+      "TMR_ENABLE_SERIAL_READER_ONLY=1",
+      "-c",
+      "-o",
+      "SmartTagSystem.o",
+      "SmartTagSystem.c"
+    ],
+    "directory": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src",
+    "file": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/SmartTagSystem.c",
+    "output": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/SmartTagSystem.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g",
+      "-fPIC",
+      "-I./include",
+      "-D",
+      "TMR_ENABLE_SERIAL_READER_ONLY=1",
+      "-c",
+      "-o",
+      "DB_utils.o",
+      "DB_utils.c"
+    ],
+    "directory": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src",
+    "file": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/DB_utils.c",
+    "output": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/DB_utils.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g",
+      "-fPIC",
+      "-I./include",
+      "-D",
+      "TMR_ENABLE_SERIAL_READER_ONLY=1",
+      "-c",
+      "-o",
+      "checkout_utils.o",
+      "checkout_utils.c"
+    ],
+    "directory": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src",
+    "file": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/checkout_utils.c",
+    "output": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/checkout_utils.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g",
+      "-fPIC",
+      "-I./include",
+      "-D",
+      "TMR_ENABLE_SERIAL_READER_ONLY=1",
+      "-c",
+      "-o",
+      "RFID_Utils.o",
+      "RFID_Utils.c"
+    ],
+    "directory": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src",
+    "file": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/RFID_Utils.c",
+    "output": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/RFID_Utils.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-g",
+      "-fPIC",
+      "-I./include",
+      "-D",
+      "TMR_ENABLE_SERIAL_READER_ONLY=1",
+      "-c",
+      "-o",
+      "sqlite3.o",
+      "sqlite3.c"
+    ],
+    "directory": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src",
+    "file": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/sqlite3.c",
+    "output": "/home/justin-covach/Documents/Capstone/RFID-Read-Sequence/src/sqlite3.o"
+  }
+]
