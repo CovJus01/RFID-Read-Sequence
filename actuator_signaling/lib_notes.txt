@@ -68,3 +68,7 @@ You now have a zip file of the library in ~/SoftwareServo/SoftwareServo.zip
 In the Arduino IDE, navigate to Sketch > Include Library > Add .ZIP Library. At the top of the drop down list, select the option to "Add .ZIP Library''
 Navigate to the zip file's location and open it
 Return to the Sketch > Include Library menu.You should now see the library at the bottom of the drop-down menu. It is ready to be used
+
+#Downloading gtk3 development package for the UI on the rapsberry pi
+(from https://www.gtk.org/docs/installations/linux/)
+sudo apt install libgtk-3-dev

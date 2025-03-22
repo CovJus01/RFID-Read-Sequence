@@ -1,0 +1,43 @@
+<interface>
+
+	<object id="main_window" class="GtkWindow">
+		<property name="visible">True</property>
+		<property name="title">TagSense</property>
+		<property name="default_width">400</property>
+		<property name="default_height">200</property>
+
+		<child>
+			<object class="GtkBox" id="vbox">
+				<property name="orientation">vertical</property>
+				<property name="spacing">10</property>
+				<property name="margin">10</property>
+
+				<child>
+					<object class="GtkButton" id="button">
+						<property name="label">Click to transmit</property>
+						<signal name="clicked" handler="on_button_clicked" swapped="no"/>
+					</object>
+				</child>
+
+				<child>
+					<object class="GtkScrolledWindow" id="scroll">
+						<property name="hexpand">True</property>
+						<property name="vexpand">True</property>
+
+						<child>
+							<object class="GtkTextView" id="text_view">
+								<property name="editable">False</property>
+								<property name="wrap_mode">word</property>
+							</object>
+						</child>
+
+					</object>
+				</child>
+
+			</object>		
+		</child>
+
+	</object>
+
+</interface>
+
