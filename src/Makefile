@@ -16,15 +16,10 @@ MAIN_OBJ = $(MAIN_SRC:.c=.o)
 CLI_OBJ = $(CLI_SRC:.c=.o)
 
 # Output executables
-TARGET_MAIN = SmartTagSystem
 TARGET_CLI = SmartTagSystem_CLI
 
 # Default target (build both)
-all: $(TARGET_MAIN) $(TARGET_CLI)
-
-# Compilation rule for main system
-$(TARGET_MAIN): $(MAIN_OBJ) $(COMMON_OBJ)
-	$(CC) $(CFLAGS) $(MAIN_OBJ) $(COMMON_OBJ) -o $(TARGET_MAIN) $(LDFLAGS)
+all: $(TARGET_CLI)
 
 # Compilation rule for CLI version
 $(TARGET_CLI): $(CLI_OBJ) $(COMMON_OBJ)
