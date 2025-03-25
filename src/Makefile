@@ -2,7 +2,7 @@
 # Compiler and flags
 CC = gcc
 CFLAGS = -g -fPIC -I./include
-LDFLAGS = -lmercuryapi -lreadline -lpthread
+LDFLAGS = -ldl -lm -lmercuryapi -lreadline -lpthread
 DEFINES = -D TMR_ENABLE_SERIAL_READER_ONLY=1
 
 # Source files

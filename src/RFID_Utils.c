@@ -23,7 +23,7 @@ TMR_Reader r, *rp;
 TMR_Status ret;
 TMR_ReadPlan plan;
 TMR_Region region;
-int readpower = 1500;
+int readpower = 2100;
 uint8_t i;
 uint8_t buffer[20];
 uint8_t *antennaList = NULL;

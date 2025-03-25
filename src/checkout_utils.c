@@ -1,5 +1,6 @@
 // A file that contains random tools for the checkout system
 #include <time.h>
+#include <stdlib.h>
 #include "checkout_utils.h"
 #include "DB_utils.h"
 #include "RFID_Utils.h"
@@ -174,6 +175,8 @@ void handle_checkout(){
 
     if(input == 'y'){
         printf("Completed Purchase\n");
+		system("./tx");
+		delay(2000);
     }
     else{
         printf("Checkout Cancelled\n");
