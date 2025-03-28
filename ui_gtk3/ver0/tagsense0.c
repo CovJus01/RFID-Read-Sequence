@@ -1,15 +1,12 @@
 #include <gtk/gtk.h>
+#include <pthread.h>
+#include <unistd.h> //TODO remove after testing with sleep is complete
 
-//Button callback function to switch to checkout page
-void openCheckoutPage(GtkWidget *widget, gpointer stack) {
-	gtk_stack_set_visible_child_name(GTK_STACK(stack), "checkout");
-}
+//Global variables to work with threading
+GtkWidget *stack;
+GtkListStore *checkout_store;
 
-//Button callback function to switch to startup page
-void openStartupPage(GtkWidget *widget, gpointer stack) {
-	gtk_stack_set_visible_child_name(GTK_STACK(stack), "startup");
-}
-
+//Function to add item to the checkout list
 void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *name, double price) {
 	GtkTreeIter iter;
 	gtk_list_store_append(checkout_store, &iter);
@@ -18,6 +15,42 @@ void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *na
 						1, name,
 						2, price,
 						-1);
+}
+
+//Function to add item to the checkout list with predefined values
+gboolean addCheckoutItemValues(gpointer data) {
+	GtkTreeIter iter;
+	gtk_list_store_append(checkout_store, &iter);
+	gtk_list_store_set(checkout_store, &iter,
+						0, 1,
+						1, "item from thread",
+						2, 10.50,
+						-1);
+
+	return FALSE; //removes function from the main loop after execution
+}
+
+void *testWorker(void *param) {
+	sleep(3);
+
+	//Schedule adding an item to the checkout list
+	g_idle_add(addCheckoutItemValues, NULL);
+
+	return NULL;
+}
+
+//Button callback function to switch to checkout page
+void openCheckoutPage(GtkWidget *widget, gpointer stack) {
+	gtk_stack_set_visible_child_name(GTK_STACK(stack), "checkout");
+
+	//Start test thread when the checkout page opens
+	pthread_t test_thread;
+	pthread_create(&test_thread, NULL, testWorker, NULL);
+}
+
+//Button callback function to switch to startup page
+void openStartupPage(GtkWidget *widget, gpointer stack) {
+	gtk_stack_set_visible_child_name(GTK_STACK(stack), "startup");
 }
 
 int main(int argc, char *argv[]) {
@@ -38,12 +71,14 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(vbox), stack_switcher, FALSE, FALSE, 0);
 
 	//Create a GtkStack
-	GtkWidget *stack = gtk_stack_new();
+	stack = gtk_stack_new();
 	gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
 	gtk_stack_set_transition_duration(GTK_STACK(stack), 500);
 	gtk_box_pack_start(GTK_BOX(vbox), stack, TRUE, TRUE, 0);
 
-	/* --- Create startup page --- */
+	/* ************** 
+	* startup page
+	***************** */
 	GtkWidget *startup_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
 	//Create start button
@@ -58,7 +93,10 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, TRUE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
 
-	/* --- Create checkout page --- */
+
+	/* ************** 
+	* checkout page
+	***************** */
 	GtkWidget *checkout_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
 	//Create top bar with back button
@@ -69,12 +107,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_back, FALSE, FALSE, 5);
 
 	//Create checkout list store
-	GtkListStore *checkout_store = gtk_list_store_new(3, G_TYPE_INT,  G_TYPE_STRING, G_TYPE_DOUBLE);
-
-	//Test checkout items
-	addCheckoutItem(checkout_store, 2, "t shirt", 15.99);
-	addCheckoutItem(checkout_store, 1, "nicer t shirt", 25.99);
-	addCheckoutItem(checkout_store, 1, "pants", 89.99);
+	checkout_store = gtk_list_store_new(3, G_TYPE_INT,  G_TYPE_STRING, G_TYPE_DOUBLE);
 
 	//Create checkout tree view
 	GtkWidget *checkout_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(checkout_store));
@@ -105,6 +138,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_scroll_window, TRUE, TRUE, 5);
 
 	gtk_stack_add_named(GTK_STACK(stack), checkout_page, "checkout");
+
 
 	//Link stack switcher with stack
 	gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(stack_switcher), GTK_STACK(stack));
