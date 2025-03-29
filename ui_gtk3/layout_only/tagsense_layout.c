@@ -3,56 +3,19 @@
  * ********************************************/
 //For GTK3 (apt package libgtk-3-dev)
 #include <gtk/gtk.h>
-
-//API Includes
-#include "serial_reader_imp.h"
-#include "tm_reader.h"
-#include "tmr_utils.h"
-
-// Necesarry Includes
-#include "RFID_Utils.h"
-#include "DB_utils.h"
-#include "checkout_utils.h"
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <inttypes.h>
-#include "sqlite3.h"
 #include <pthread.h>
-#include <unistd.h> //for sleep
+#include <unistd.h>
 
 /* ********************************************
  * Global variables
  * ********************************************/
-
 //Global GUI variables to work with threading
 GtkWidget *stack;
 GtkListStore *checkout_store;
 
-//Initialized reader global variables, required memory for the whole process flow
-extern TMR_Reader r, *rp;
-extern TMR_Status ret;
-extern TMR_ReadPlan plan;
-extern TMR_Region region;
-extern int readpower;
-extern uint8_t i;
-extern uint8_t buffer[20];
-extern uint8_t *antennaList;
-extern uint8_t antennaCount;
-extern TMR_TRD_MetadataFlag metadata;
-extern char string[100];
-extern TMR_String model;
-char input;
-int admin_request;
-int close_request = 0;
-sqlite3 *db;
-
 /* ********************************************
  * Function definitions
  * ********************************************/
-
 //Function to add item to the checkout list
 void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *name, double price) {
 	GtkTreeIter iter;
@@ -77,11 +40,6 @@ gboolean addCheckoutItemValues(gpointer data) {
 	return FALSE; //removes function from the main loop after execution
 }
 
-//Function to clear checkout list before a new scan
-void clearCheckout(GtkListStore *checkout_store) {
-	gtk_list_store_clear(GTK_LIST_STORE(checkout_store));
-}
-
 void *testWorker(void *param) {
 	sleep(3);
 
@@ -102,10 +60,6 @@ void openCheckoutPage(GtkWidget *widget, gpointer stack) {
 
 //Button callback function to switch to startup page
 void openStartupPage(GtkWidget *widget, gpointer stack) {
-	//Clear checkout list
-	clearCheckout(checkout_store);
-
-	//Open startup page
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "startup");
 }
 
@@ -152,6 +106,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, TRUE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
+
 
 	/* ************** 
 	* checkout page
