@@ -26,7 +26,6 @@
 /* ********************************************
  * Global variables
  * ********************************************/
-
 //Global GUI variables to work with threading
 GtkWidget *stack;
 GtkListStore *checkout_store;
@@ -52,7 +51,6 @@ sqlite3 *db;
 /* ********************************************
  * Function definitions
  * ********************************************/
-
 //Function to add item to the checkout list
 void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *name, double price) {
 	GtkTreeIter iter;
@@ -82,22 +80,53 @@ void clearCheckout(GtkListStore *checkout_store) {
 	gtk_list_store_clear(GTK_LIST_STORE(checkout_store));
 }
 
-void *testWorker(void *param) {
-	sleep(3);
+//Define thread worker to be called when reading RFID tags
+void *RFIDReadWorker(void *param) {
+	printf("listening for tags...\n");
+	ret = TMR_read(rp, 1500, NULL);
 
-	//Schedule adding an item to the checkout list
-	g_idle_add(addCheckoutItemValues, NULL);
+	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
+	{
+		TMR_TagReadData trd;
+		char idStr[128];
+		char itemID[20];
 
-	return NULL;
+		ret = TMR_getNextTag(rp, &trd);
+		checkerr(rp, ret, 1, "fetching tag");
+
+		TMR_bytesToHex(trd.tag.epc, trd.tag.epcByteCount, idStr);
+
+		get_tag(db, idStr, itemID, sizeof(itemID));
+		Item* new_item = get_item(db, itemID);
+
+		//Add item to checkout store
+		addCheckoutItem(checkout_store, 1, new_item->description, new_item->price);
+
+		//Free memory of read item
+		if (new_item->description) 
+			free(new_item->description);
+
+		free(new_item);
+	}
+}
+
+//Deconstructor callback function to clear memory when UI is closed
+void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
+	if (db)
+		sqlite3_close(db);
+	if (rp)
+		TMR_destroy(rp);
+	
+	gtk_main_quit();
 }
 
 //Button callback function to switch to checkout page
 void openCheckoutPage(GtkWidget *widget, gpointer stack) {
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "checkout");
 
-	//Start test thread when the checkout page opens
-	pthread_t test_thread;
-	pthread_create(&test_thread, NULL, testWorker, NULL);
+	//Start an RFID read thread when the checkout page opens
+	pthread_t rfid_read_thread;
+	pthread_create(&rfid_read_thread, NULL, RFIDReadWorker, NULL);
 }
 
 //Button callback function to switch to startup page
@@ -112,15 +141,54 @@ void openStartupPage(GtkWidget *widget, gpointer stack) {
 /* ********************************************
  * Main function
  * ********************************************/
+int main(int argc, char *argv[]) {	
+	// Initialize system variables
+	admin_request = 0;
+	rp = &r;
+	int system_status;
 
-int main(int argc, char *argv[]) {
+	// Initialize Database variables
+	int sql_status;
+	sql_status = sqlite3_open("RFID_SYSTEM_DB.db", &db);
+
+	// Initialize the reader
+	reader_init();
+
+	printf("RFID reader initialized\n");
+
+	if(sql_status != SQLITE_OK) {
+
+		//Get error
+		const char * errmsg = sqlite3_errmsg(db);
+		printf("ERROR OPENING DATABASE, ERROR:\n\n %s\n", errmsg);
+		printf("SHUTTING DOWN\n");
+
+		//Close system
+		sqlite3_close(db);
+		return 1;
+	}
+
+	// Create the table if it is not created yet
+	sql_status = create_table(db);
+	if (sql_status != SQLITE_OK){
+
+		//Get error
+		const char * errmsg = sqlite3_errmsg(db);
+		printf("ERROR CREATING TABLE, ERROR:\n\n %s\n", errmsg);
+		printf("SHUTTING DOWN\n");
+
+		//Close system
+		sqlite3_close(db);
+		return 1;
+	}
+
 	gtk_init(&argc, &argv);
 
 	//Create main window
 	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
-	gtk_window_set_title(GTK_WINDOW(window), "TagSense");
+	gtk_window_set_title(GTK_WINDOW(window), "TagSense v0");
 	gtk_window_set_default_size(GTK_WINDOW(window), 1000, 600);
-	g_signal_connect(window, "destroy", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect(window, "destroy", G_CALLBACK(clearMemoryOnClose), NULL);
 
 	//Create a vertical box layout
 	GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);

@@ -149,7 +149,7 @@ void handle_update_tags(){
     printf("Tags updated to itemID = %s\n", itemID);
     fflush(stdout);
 }
-
+/* commenting out for now because of change to get_item func
 void handle_checkout(){
 
     char input;
@@ -181,5 +181,5 @@ void handle_checkout(){
     else{
         printf("Checkout Cancelled\n");
     }
-
 }
+*/

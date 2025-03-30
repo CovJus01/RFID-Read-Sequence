@@ -6,16 +6,22 @@ DEFINES = -D TMR_ENABLE_SERIAL_READER_ONLY=1
 LIBS = $(shell pkg-config --libs gtk+-3.0)
 
 # Source files
-SRC = DB_utils.c checkout_utils.c RFID_Utils.c sqlite3.c tagsense0.c
+RFID_SRC = DB_utils.c checkout_utils.c RFID_Utils.c sqlite3.c 
+GUI_SRC = tagsense0.c
+
+# Object files
+OBJ = $(RFID_SRC:.c=.o)
 
 # Output executable
 TARGET=tagsense0
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS) $(LIBS)
+# Compilation rule
+$(TARGET): $(RFID_SRC) $(GUI_SRC)
+	$(CC) $(CFLAGS) $(DEFINES) $(RFID_SRC) $(GUI_SRC) -o $(TARGET) $(LDFLAGS) $(LIBS)
 
+# Clean rule to remove object files and executables
 clean:
 	rm -f $(TARGET)
 
