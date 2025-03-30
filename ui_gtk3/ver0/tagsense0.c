@@ -30,6 +30,9 @@
 GtkWidget *stack;
 GtkListStore *checkout_store;
 
+//Mutex lock to ensure the program will only try to do one RFID read at once
+pthread_mutex_t rfid_mutex;
+
 //Initialized reader global variables, required memory for the whole process flow
 extern TMR_Reader r, *rp;
 extern TMR_Status ret;
@@ -82,8 +85,11 @@ void clearCheckout(GtkListStore *checkout_store) {
 
 //Define thread worker to be called when reading RFID tags
 void *RFIDReadWorker(void *param) {
+	//Aquire mutex, read tags in checkout bin, and releases mutex
+	pthread_mutex_lock(&rfid_mutex);
 	printf("listening for tags...\n");
 	ret = TMR_read(rp, 1500, NULL);
+	pthread_mutex_unlock(&rfid_mutex);
 
 	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
 	{
@@ -138,6 +144,16 @@ void openStartupPage(GtkWidget *widget, gpointer stack) {
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "startup");
 }
 
+//Button callback function to re-read the RFID tags while on the checkout page ("refresh")
+void refreshCheckout(GtkWidget *widget, gpointer data) {
+	//Clear checkout list
+	clearCheckout(checkout_store);
+
+	//Start an RFID read thread when the checkout page opens
+	pthread_t rfid_read_thread;
+	pthread_create(&rfid_read_thread, NULL, RFIDReadWorker, NULL);
+}
+
 /* ********************************************
  * Main function
  * ********************************************/
@@ -147,12 +163,16 @@ int main(int argc, char *argv[]) {
 	rp = &r;
 	int system_status;
 
-	// Initialize Database variables
+	// Initialize database variables
 	int sql_status;
 	sql_status = sqlite3_open("RFID_SYSTEM_DB.db", &db);
 
 	// Initialize the reader
 	reader_init();
+
+	if (pthread_mutex_init(&rfid_mutex, NULL) != 0) {
+		printf("Error in initializing RFID mutex!\n");
+	}
 
 	printf("RFID reader initialized\n");
 
@@ -226,12 +246,22 @@ int main(int argc, char *argv[]) {
 	***************** */
 	GtkWidget *checkout_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
-	//Create top bar with back button
+	//Create top bar with back and refresh buttons
 	GtkWidget *checkout_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+
 	GtkWidget *button_back = gtk_button_new_with_label("Back");
 	g_signal_connect(button_back, "clicked", G_CALLBACK(openStartupPage), stack);
 	gtk_widget_set_halign(button_back, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_back, FALSE, FALSE, 5);
+
+	GtkWidget *top_bar_spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_widget_set_hexpand(top_bar_spacer, TRUE);  //make spacer expand to take up middle space of top bar
+	gtk_box_pack_start(GTK_BOX(checkout_top_bar), top_bar_spacer, TRUE, TRUE, 0);
+
+	GtkWidget *button_refresh = gtk_button_new_with_label("Refresh");
+	g_signal_connect(button_refresh, "clicked", G_CALLBACK(refreshCheckout), NULL);
+	gtk_widget_set_halign(button_refresh, GTK_ALIGN_END);
+	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_refresh, FALSE, FALSE, 5);
 
 	//Create checkout list store
 	checkout_store = gtk_list_store_new(3, G_TYPE_INT,  G_TYPE_STRING, G_TYPE_DOUBLE);
