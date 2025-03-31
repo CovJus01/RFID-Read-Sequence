@@ -24,11 +24,25 @@
 #include <unistd.h> //for sleep
 
 /* ********************************************
+ * Definitions
+ * ********************************************/
+ //TODO implement admin user/pass in database?
+ #define ADMIN_USER "admin"
+ #define ADMIN_PASS "1234"
+
+ //Struct to gather admin login information for button callback function
+ typedef struct {
+	GtkEntry *username;
+	GtkEntry *password;
+} LoginInfo;
+
+/* ********************************************
  * Global variables
  * ********************************************/
-//Global GUI variables to work with threading
+//Global GUI variables
 GtkWidget *stack;
 GtkListStore *checkout_store;
+LoginInfo *login_info;
 
 //Mutex lock to ensure the program will only try to do one RFID read at once
 pthread_mutex_t rfid_mutex;
@@ -63,19 +77,6 @@ void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *na
 						1, name,
 						2, price,
 						-1);
-}
-
-//Function to add item to the checkout list with predefined values
-gboolean addCheckoutItemValues(gpointer data) {
-	GtkTreeIter iter;
-	gtk_list_store_append(checkout_store, &iter);
-	gtk_list_store_set(checkout_store, &iter,
-						0, 1,
-						1, "item from thread",
-						2, 10.50,
-						-1);
-
-	return FALSE; //removes function from the main loop after execution
 }
 
 //Function to clear checkout list before a new scan
@@ -122,6 +123,8 @@ void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
 		sqlite3_close(db);
 	if (rp)
 		TMR_destroy(rp);
+	if (login_info)	
+		g_free(login_info);
 	
 	gtk_main_quit();
 }
@@ -133,6 +136,11 @@ void openCheckoutPage(GtkWidget *widget, gpointer stack) {
 	//Start an RFID read thread when the checkout page opens
 	pthread_t rfid_read_thread;
 	pthread_create(&rfid_read_thread, NULL, RFIDReadWorker, NULL);
+}
+
+//Button callback function to switch to admin login page
+void openAdminLoginPage(GtkWidget *widget, gpointer stack) {
+	gtk_stack_set_visible_child_name(GTK_STACK(stack), "admin_login");
 }
 
 //Button callback function to switch to startup page
@@ -152,6 +160,27 @@ void refreshCheckout(GtkWidget *widget, gpointer data) {
 	//Start an RFID read thread when the checkout page opens
 	pthread_t rfid_read_thread;
 	pthread_create(&rfid_read_thread, NULL, RFIDReadWorker, NULL);
+}
+
+//Button callback function to switch to attemp admin login from admin login page
+void attemptAdminLogin(GtkButton *button, gpointer data) {
+	LoginInfo *login_info = (LoginInfo*) data;
+	const char *username = gtk_entry_get_text(login_info->username);
+	const char *password = gtk_entry_get_text(login_info->password);
+
+	if (g_strcmp0(username, ADMIN_USER) == 0 && g_strcmp0(password, ADMIN_PASS) == 0) {
+		// Login successful, switch to the admin page
+		gtk_stack_set_visible_child_name(GTK_STACK(stack), "admin");
+	} else {
+		// Display an error message (you can improve this later)
+		GtkWidget *dialog = gtk_message_dialog_new(NULL,
+												   GTK_DIALOG_MODAL,
+												   GTK_MESSAGE_ERROR,
+												   GTK_BUTTONS_OK,
+												   "Invalid username or password");
+		gtk_dialog_run(GTK_DIALOG(dialog));
+		gtk_widget_destroy(dialog);
+	}
 }
 
 /* ********************************************
@@ -224,10 +253,25 @@ int main(int argc, char *argv[]) {
 	gtk_stack_set_transition_duration(GTK_STACK(stack), 500);
 	gtk_box_pack_start(GTK_BOX(vbox), stack, TRUE, TRUE, 0);
 
+	//Create login info struct to store potentail admin login information
+	login_info = g_malloc(sizeof(LoginInfo));
+
 	/* ************** 
 	* startup page
 	***************** */
 	GtkWidget *startup_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+
+	//Create top bar with back andadmin login buttons
+	GtkWidget *startup_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+
+	GtkWidget *startup_top_bar_spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_widget_set_hexpand(startup_top_bar_spacer, TRUE);
+	gtk_box_pack_start(GTK_BOX(startup_top_bar), startup_top_bar_spacer, TRUE, TRUE, 0);
+
+	GtkWidget *button_admin_login = gtk_button_new_with_label("Admin Login");
+	g_signal_connect(button_admin_login, "clicked", G_CALLBACK(openAdminLoginPage), stack);
+	gtk_widget_set_halign(button_admin_login, GTK_ALIGN_END);
+	gtk_box_pack_start(GTK_BOX(startup_top_bar), button_admin_login, FALSE, FALSE, 5);
 
 	//Create start button
 	GtkWidget *button_start = gtk_button_new_with_label("Start");
@@ -237,6 +281,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(button_start, "clicked", G_CALLBACK(openCheckoutPage), stack);
 
 	//Pack startup page
+	gtk_box_pack_start(GTK_BOX(startup_page), startup_top_bar, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, TRUE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
@@ -295,6 +340,67 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_scroll_window, TRUE, TRUE, 5);
 
 	gtk_stack_add_named(GTK_STACK(stack), checkout_page, "checkout");
+
+	/* ************** 
+	* admin login page
+	***************** */
+	GtkWidget *admin_login_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+
+	//Create top bar with back button
+	GtkWidget *admin_login_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+
+	GtkWidget *button_admin_login_back = gtk_button_new_with_label("Back");
+	g_signal_connect(button_admin_login_back, "clicked", G_CALLBACK(openStartupPage), stack);
+	gtk_widget_set_halign(button_admin_login_back, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(admin_login_top_bar), button_admin_login_back, FALSE, FALSE, 5);
+
+	//Create username and password prompts
+	GtkWidget *username_label = gtk_label_new("Username:");
+	GtkWidget *username_entry = gtk_entry_new();
+
+	GtkWidget *password_label = gtk_label_new("Password:");
+	GtkWidget *password_entry = gtk_entry_new();
+	gtk_entry_set_visibility(GTK_ENTRY(password_entry), FALSE); //hides password text
+
+	GtkWidget *button_submit_login = gtk_button_new_with_label("Submit");
+
+	//Prepare login information
+	login_info->username = GTK_ENTRY(username_entry);
+	login_info->password = GTK_ENTRY(password_entry);
+
+	//Connect the login button to the callback function
+	g_signal_connect(button_submit_login, "clicked", G_CALLBACK(attemptAdminLogin), login_info);
+
+	//Pack admin login page
+	gtk_box_pack_start(GTK_BOX(admin_login_page), admin_login_top_bar, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(admin_login_page), username_label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(admin_login_page), username_entry, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(admin_login_page), password_label, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(admin_login_page), password_entry, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(admin_login_page), button_submit_login, FALSE, FALSE, 0);
+	gtk_stack_add_named(GTK_STACK(stack), admin_login_page, "admin_login");
+
+	/* ************** 
+	* admin page
+	***************** */
+	GtkWidget *admin_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+
+	//Create top bar with back button
+	GtkWidget *admin_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
+
+	GtkWidget *button_admin_back = gtk_button_new_with_label("Back");
+	g_signal_connect(button_admin_back, "clicked", G_CALLBACK(openStartupPage), stack);
+	gtk_widget_set_halign(button_admin_back, GTK_ALIGN_START);
+	gtk_box_pack_start(GTK_BOX(admin_top_bar), button_admin_back, FALSE, FALSE, 5);
+
+	//Create simple label for now (TODO put checkout like interface)
+    GtkWidget *admin_label = gtk_label_new("hello admin :)");
+
+	//Pack admin page
+	gtk_box_pack_start(GTK_BOX(admin_page), admin_top_bar, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(admin_page), admin_label, FALSE, FALSE, 0);
+	gtk_stack_add_named(GTK_STACK(stack), admin_page, "admin");
+
 
 	//Link stack switcher with stack
 	gtk_stack_switcher_set_stack(GTK_STACK_SWITCHER(stack_switcher), GTK_STACK(stack));
