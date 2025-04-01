@@ -361,7 +361,7 @@ int main(int argc, char *argv[]) {
 
 	//Pack startup page
 	gtk_box_pack_start(GTK_BOX(startup_page), startup_top_bar, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
 

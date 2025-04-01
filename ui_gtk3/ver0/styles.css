@@ -14,13 +14,20 @@ button {
     border-radius:15px;
     color: #FFFFFF;
     background-color: #002d04;
-    height: 140px;
-    width: 600px;
+    min-height: 140px;
+    min-width: 30px;
+	font-size: 46px;
+	margin-top: 0px;
+	margin-right:200px;
+	margin-bottom:200px;
+	margin-left:200px;
+	padding: 20px;
 }
 
 .tagsense-label {
     color: #002d04;
-    font-size: 45px;
+    font-size: 120px;
+	font-weight: bold;
 }
 
 .default-background {
