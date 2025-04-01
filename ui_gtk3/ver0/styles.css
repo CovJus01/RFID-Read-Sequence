@@ -1,0 +1,11 @@
+/*
+* Css styles for our program
+* */
+
+
+button {
+
+    background-color: #002d04;
+    color: #FFFFFF;
+    border-radius:10px;
+}
