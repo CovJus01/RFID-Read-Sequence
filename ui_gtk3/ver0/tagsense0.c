@@ -186,7 +186,7 @@ void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
 		printf("freeing login struct...\n");
 		g_free(login_info);
 	}
-	
+
 	printf("quitting main gtk thread...\n");
 	gtk_main_quit();
 }
@@ -209,7 +209,7 @@ void openAdminLoginPage(GtkWidget *widget, gpointer stack) {
 
 //Button callback function to switch to startup page
 void openStartupPage(GtkWidget *widget, gpointer stack) {
-	//Clear tables 
+	//Clear tables
 	clearCheckout(checkout_store);
 	clearAdminTable(admin_store);
 
@@ -333,6 +333,8 @@ int main(int argc, char *argv[]) {
 	* startup page
 	***************** */
 	GtkWidget *startup_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkStyleContext *startup_context = gtk_widget_get_style_context(startup_page);
+    gtk_style_context_add_class(startup_context, "default-background");
 
 	//Create top bar with back andadmin login buttons
 	GtkWidget *startup_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
@@ -348,15 +350,19 @@ int main(int argc, char *argv[]) {
 
 	//Create start button
 	GtkWidget *button_start = gtk_button_new_with_label("Start");
+    GtkStyleContext *start_btn_context = gtk_widget_get_style_context(button_start);
+    gtk_style_context_add_class(start_btn_context, "start-button");
 
 	//Create label
-	GtkWidget *label1 = gtk_label_new("startup page");
+	GtkWidget *label1 = gtk_label_new("TagSense");
+    GtkStyleContext *tagsense_context = gtk_widget_get_style_context(label1);
+    gtk_style_context_add_class(tagsense_context, "tagsense-label");
 	g_signal_connect(button_start, "clicked", G_CALLBACK(openCheckoutPage), stack);
 
 	//Pack startup page
 	gtk_box_pack_start(GTK_BOX(startup_page), startup_top_bar, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
 
 	/* **************
@@ -500,7 +506,7 @@ int main(int argc, char *argv[]) {
 	gtk_widget_set_halign(button_admin_refresh, GTK_ALIGN_END);
 	gtk_box_pack_start(GTK_BOX(admin_top_bar), button_admin_refresh, FALSE, FALSE, 5);
 
-	//Create admin list store (columns: item id, item description, item price) 
+	//Create admin list store (columns: item id, item description, item price)
 	admin_store = gtk_list_store_new(3, G_TYPE_STRING,  G_TYPE_STRING, G_TYPE_INT);
 
 	//Create admin tree view
@@ -514,7 +520,7 @@ int main(int argc, char *argv[]) {
 	admin_renderer = gtk_cell_renderer_text_new();
 	admin_col = gtk_tree_view_column_new_with_attributes("Item ID", admin_renderer, "text", 0, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(admin_tree_view), admin_col);
-	
+
 	//Define name column
 	admin_renderer = gtk_cell_renderer_text_new();
 	admin_col = gtk_tree_view_column_new_with_attributes("Name", admin_renderer, "text", 1, NULL);

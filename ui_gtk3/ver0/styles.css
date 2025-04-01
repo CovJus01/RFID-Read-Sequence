@@ -5,7 +5,24 @@
 
 button {
 
-    background-color: #002d04;
+    background-color: #040404;
     color: #FFFFFF;
     border-radius:10px;
+}
+
+.start-button {
+    border-radius:15px;
+    color: #FFFFFF;
+    background-color: #002d04;
+    height: 140px;
+    width: 600px;
+}
+
+.tagsense-label {
+    color: #002d04;
+    font-size: 45px;
+}
+
+.default-background {
+    background-color: #E6E6E6;
 }
