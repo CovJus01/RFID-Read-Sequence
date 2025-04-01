@@ -285,6 +285,8 @@ int main(int argc, char *argv[]) {
 	* startup page
 	***************** */
 	GtkWidget *startup_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkStyleContext *startup_context = gtk_widget_get_style_context(startup_page);
+    gtk_style_context_add_class(startup_context, "default-background");
 
 	//Create top bar with back andadmin login buttons
 	GtkWidget *startup_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
@@ -300,15 +302,19 @@ int main(int argc, char *argv[]) {
 
 	//Create start button
 	GtkWidget *button_start = gtk_button_new_with_label("Start");
+    GtkStyleContext *start_btn_context = gtk_widget_get_style_context(button_start);
+    gtk_style_context_add_class(start_btn_context, "start-button");
 
 	//Create label
-	GtkWidget *label1 = gtk_label_new("startup page");
+	GtkWidget *label1 = gtk_label_new("TagSense");
+    GtkStyleContext *tagsense_context = gtk_widget_get_style_context(label1);
+    gtk_style_context_add_class(tagsense_context, "tagsense-label");
 	g_signal_connect(button_start, "clicked", G_CALLBACK(openCheckoutPage), stack);
 
 	//Pack startup page
 	gtk_box_pack_start(GTK_BOX(startup_page), startup_top_bar, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, TRUE, 0);
+	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
 
 	/* **************
