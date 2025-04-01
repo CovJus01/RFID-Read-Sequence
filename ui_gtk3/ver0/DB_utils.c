@@ -102,14 +102,19 @@ void get_tag(sqlite3 * db, char tagID[], char* itemID,int buffersize) {
     //Figure out what to do with the retrieved data
     status = sqlite3_step(statement_ptr);
 
-    const char *tagID_ret = sqlite3_column_text(statement_ptr, 0);
-    const char *itemID_ret = sqlite3_column_text(statement_ptr, 1);
-    int status_ret = sqlite3_column_int(statement_ptr,2);
-    strncpy(itemID, itemID_ret, buffersize-1);
-    status = sqlite3_finalize(statement_ptr);
+	if (status == SQLITE_ROW) {
+		const char *tagID_ret = sqlite3_column_text(statement_ptr, 0);
+		const char *itemID_ret = sqlite3_column_text(statement_ptr, 1);
+		int status_ret = sqlite3_column_int(statement_ptr,2);
+		strncpy(itemID, itemID_ret, buffersize-1);
+		status = sqlite3_finalize(statement_ptr);
 
-
-    itemID[buffersize-1] = '\0';
+		itemID[buffersize-1] = '\0';
+	} 
+	else {
+		strncpy(itemID, "0", buffersize-1);
+		itemID[buffersize-1] = '\0';
+	}		
 }
 
 int get_item(sqlite3* db, char* itemID, Item* item) {

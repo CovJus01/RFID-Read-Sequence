@@ -124,10 +124,14 @@ void readRFIDTagsInCheckout() {
 		TMR_bytesToHex(trd.tag.epc, trd.tag.epcByteCount, idStr);
 
 		get_tag(db, idStr, itemID, sizeof(itemID));
-		get_item(db, itemID, read_item);
 
-		//Add item to checkout store
-		addCheckoutItem(checkout_store, 1, read_item->description, read_item->price);
+		//Filter out non-registered tags from checkout table
+		if (strcmp(itemID, "0") != 0) {
+			get_item(db, itemID, read_item);
+
+			//Add item to checkout store
+			addCheckoutItem(checkout_store, 1, read_item->description, read_item->price);
+		}
 	}
 }
 
