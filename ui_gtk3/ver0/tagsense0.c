@@ -411,11 +411,35 @@ int main(int argc, char *argv[]) {
 	checkout_col = gtk_tree_view_column_new_with_attributes("Price ($)", checkout_renderer, "text", 2, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(checkout_tree_view), checkout_col);
 
+	//Create grid for checkout summary and checkout button
+		//Main grid description
+	GtkWidget *checkout_summary_grid = gtk_grid_new();
+	gtk_grid_set_column_spacing(GTK_GRID(checkout_summary_grid), 10);
+	gtk_grid_set_row_spacing(GTK_GRID(checkout_summary_grid), 10);
+
+		//Left side: checkout summary
+	GtkWidget *checkout_summary_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_widget_set_size_request(checkout_summary_box, 400, 150);
+    gtk_widget_set_halign(checkout_summary_box, GTK_ALIGN_START);
+    gtk_widget_set_valign(checkout_summary_box, GTK_ALIGN_CENTER);
+
+    GtkWidget *item_count_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(item_count_label), "<span font='24'><b>Total item Count:</b></span>");
+
+    GtkWidget *price_details_label = gtk_label_new("Discount: $$\nTax: $$\nTotal: $$");
+    gtk_widget_set_halign(price_details_label, GTK_ALIGN_END);
+
+    gtk_box_pack_start(GTK_BOX(checkout_summary_box), item_count_label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(checkout_summary_box), price_details_label, FALSE, FALSE, 5);
+
+    gtk_grid_attach(GTK_GRID(checkout_summary_grid), checkout_summary_box, 0, 0, 1, 1);
+
 	//Pack checkout page
 	GtkWidget *checkout_scroll_window = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER(checkout_scroll_window), checkout_tree_view);
 	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_top_bar, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_scroll_window, TRUE, TRUE, 5);
+	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_summary_grid, FALSE, FALSE, 10);
 
 	gtk_stack_add_named(GTK_STACK(stack), checkout_page, "checkout");
 
