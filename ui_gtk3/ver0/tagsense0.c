@@ -70,6 +70,19 @@ sqlite3 *db;
  * Function definitions
  * ********************************************/
 //Function to add item to the checkout list
+//
+//
+//
+
+void load_css(void) {
+    GtkCssProvider *provider = gtk_css_provider_new();
+    GdkScreen *screen = gdk_screen_get_default();
+    gtk_css_provider_load_from_path(provider, "styles.css", NULL);
+    gtk_style_context_add_provider_for_screen(screen, GTK_STYLE_PROVIDER(provider),
+                                              GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    g_object_unref(provider);  // Free the provider when done
+}
+
 void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *name, double price) {
 	GtkTreeIter iter;
 	gtk_list_store_append(checkout_store, &iter);
@@ -121,16 +134,16 @@ void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
 		TMR_destroy(rp);
 		printf("freeing rp...\n");
 	//Free memory of read item
-	if (read_item->description) 
+	if (read_item->description)
 		free(read_item->description);
 		printf("freeing item struct description...\n");
-	if (read_item) 
+	if (read_item)
 		printf("freeing item struct...\n");
 		free(read_item);
-	if (login_info)	
+	if (login_info)
 		printf("freeing login struct...\n");
 		g_free(login_info);
-	
+
 	printf("quitting main gtk thread...\n");
 	gtk_main_quit();
 }
@@ -193,7 +206,7 @@ void attemptAdminLogin(GtkButton *button, gpointer data) {
 /* ********************************************
  * Main function
  * ********************************************/
-int main(int argc, char *argv[]) {	
+int main(int argc, char *argv[]) {
 	// Initialize system variables
 	admin_request = 0;
 	rp = &r;
@@ -246,6 +259,7 @@ int main(int argc, char *argv[]) {
 	gtk_window_set_default_size(GTK_WINDOW(window), 970, 600);
 	g_signal_connect(window, "destroy", G_CALLBACK(clearMemoryOnClose), NULL);
 
+    load_css();
 	//Create a vertical box layout
 	GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 	gtk_container_add(GTK_CONTAINER(window), vbox);
@@ -267,7 +281,7 @@ int main(int argc, char *argv[]) {
 	//Create login info struct to store potentail admin login information
 	login_info = g_malloc(sizeof(LoginInfo));
 
-	/* ************** 
+	/* **************
 	* startup page
 	***************** */
 	GtkWidget *startup_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -297,7 +311,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, TRUE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
 
-	/* ************** 
+	/* **************
 	* checkout page
 	***************** */
 	GtkWidget *checkout_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -309,7 +323,7 @@ int main(int argc, char *argv[]) {
 	g_signal_connect(button_back, "clicked", G_CALLBACK(openStartupPage), stack);
 	gtk_widget_set_halign(button_back, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_back, FALSE, FALSE, 5);
-	
+
 	GtkWidget *button_refresh = gtk_button_new_with_label("Refresh");
 	g_signal_connect(button_refresh, "clicked", G_CALLBACK(refreshCheckout), NULL);
 	gtk_widget_set_halign(button_refresh, GTK_ALIGN_END);
@@ -338,7 +352,7 @@ int main(int argc, char *argv[]) {
 	checkout_renderer = gtk_cell_renderer_text_new();
 	checkout_col = gtk_tree_view_column_new_with_attributes("Quantity", checkout_renderer, "text", 0, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(checkout_tree_view), checkout_col);
-	
+
 	//Define name column
 	checkout_renderer = gtk_cell_renderer_text_new();
 	checkout_col = gtk_tree_view_column_new_with_attributes("Name", checkout_renderer, "text", 1, NULL);
@@ -357,7 +371,7 @@ int main(int argc, char *argv[]) {
 
 	gtk_stack_add_named(GTK_STACK(stack), checkout_page, "checkout");
 
-	/* ************** 
+	/* **************
 	* admin login page
 	***************** */
 	GtkWidget *admin_login_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
@@ -396,7 +410,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(admin_login_page), button_submit_login, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), admin_login_page, "admin_login");
 
-	/* ************** 
+	/* **************
 	* admin page
 	***************** */
 	GtkWidget *admin_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
