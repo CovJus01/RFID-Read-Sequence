@@ -42,6 +42,7 @@
 //Global GUI variables
 GtkWidget *stack;
 GtkListStore *checkout_store;
+Item *read_item;
 LoginInfo *login_info;
 
 //Mutex lock to ensure the program will only try to do one RFID read at once
@@ -84,13 +85,12 @@ void clearCheckout(GtkListStore *checkout_store) {
 	gtk_list_store_clear(GTK_LIST_STORE(checkout_store));
 }
 
-//Define thread worker to be called when reading RFID tags
-void *RFIDReadWorker(void *param) {
+//Define function to be called when reading RFID tags
+void readRFIDTags() {
 	//Aquire mutex, read tags in checkout bin, and releases mutex
-	pthread_mutex_lock(&rfid_mutex);
+	//pthread_mutex_lock(&rfid_mutex);
 	printf("listening for tags...\n");
-	ret = TMR_read(rp, 1500, NULL);
-	pthread_mutex_unlock(&rfid_mutex);
+	ret = TMR_read(rp, 1000, NULL);
 
 	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
 	{
@@ -104,28 +104,34 @@ void *RFIDReadWorker(void *param) {
 		TMR_bytesToHex(trd.tag.epc, trd.tag.epcByteCount, idStr);
 
 		get_tag(db, idStr, itemID, sizeof(itemID));
-		Item* new_item = get_item(db, itemID);
+		get_item(db, itemID, read_item);
 
 		//Add item to checkout store
-		addCheckoutItem(checkout_store, 1, new_item->description, new_item->price);
-
-		//Free memory of read item
-		if (new_item->description) 
-			free(new_item->description);
-
-		free(new_item);
+		addCheckoutItem(checkout_store, 1, read_item->description, read_item->price);
 	}
+	//pthread_mutex_unlock(&rfid_mutex);
 }
 
 //Deconstructor callback function to clear memory when UI is closed
 void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
 	if (db)
+		printf("closing database...\n");
 		sqlite3_close(db);
 	if (rp)
 		TMR_destroy(rp);
+		printf("freeing rp...\n");
+	//Free memory of read item
+	if (read_item->description) 
+		free(read_item->description);
+		printf("freeing item struct description...\n");
+	if (read_item) 
+		printf("freeing item struct...\n");
+		free(read_item);
 	if (login_info)	
+		printf("freeing login struct...\n");
 		g_free(login_info);
 	
+	printf("quitting main gtk thread...\n");
 	gtk_main_quit();
 }
 
@@ -133,13 +139,15 @@ void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
 void openCheckoutPage(GtkWidget *widget, gpointer stack) {
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "checkout");
 
-	//Start an RFID read thread when the checkout page opens
-	pthread_t rfid_read_thread;
-	pthread_create(&rfid_read_thread, NULL, RFIDReadWorker, NULL);
+	//Read RFID tags and update checkout store
+	readRFIDTags();
 }
 
 //Button callback function to switch to admin login page
 void openAdminLoginPage(GtkWidget *widget, gpointer stack) {
+	//Clear checkout list (in case opened from checkout page)
+	clearCheckout(checkout_store);
+
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "admin_login");
 }
 
@@ -157,9 +165,8 @@ void refreshCheckout(GtkWidget *widget, gpointer data) {
 	//Clear checkout list
 	clearCheckout(checkout_store);
 
-	//Start an RFID read thread when the checkout page opens
-	pthread_t rfid_read_thread;
-	pthread_create(&rfid_read_thread, NULL, RFIDReadWorker, NULL);
+	//Read RFID tags and update checkout store
+	readRFIDTags();
 }
 
 //Button callback function to switch to attemp admin login from admin login page
@@ -236,7 +243,7 @@ int main(int argc, char *argv[]) {
 	//Create main window
 	GtkWidget *window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
 	gtk_window_set_title(GTK_WINDOW(window), "TagSense v0");
-	gtk_window_set_default_size(GTK_WINDOW(window), 1000, 600);
+	gtk_window_set_default_size(GTK_WINDOW(window), 970, 600);
 	g_signal_connect(window, "destroy", G_CALLBACK(clearMemoryOnClose), NULL);
 
 	//Create a vertical box layout
@@ -250,8 +257,12 @@ int main(int argc, char *argv[]) {
 	//Create a GtkStack
 	stack = gtk_stack_new();
 	gtk_stack_set_transition_type(GTK_STACK(stack), GTK_STACK_TRANSITION_TYPE_SLIDE_LEFT_RIGHT);
-	gtk_stack_set_transition_duration(GTK_STACK(stack), 500);
+	gtk_stack_set_transition_duration(GTK_STACK(stack), 1000);
 	gtk_box_pack_start(GTK_BOX(vbox), stack, TRUE, TRUE, 0);
+
+	//Create instance of item struct to store item information read from database
+	read_item = malloc(sizeof(Item));
+	read_item->description = NULL;
 
 	//Create login info struct to store potentail admin login information
 	login_info = g_malloc(sizeof(LoginInfo));
@@ -291,22 +302,27 @@ int main(int argc, char *argv[]) {
 	***************** */
 	GtkWidget *checkout_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
-	//Create top bar with back and refresh buttons
+	//Create top bar with back, refresh, and admin login buttons
 	GtkWidget *checkout_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
 	GtkWidget *button_back = gtk_button_new_with_label("Back");
 	g_signal_connect(button_back, "clicked", G_CALLBACK(openStartupPage), stack);
 	gtk_widget_set_halign(button_back, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_back, FALSE, FALSE, 5);
+	
+	GtkWidget *button_refresh = gtk_button_new_with_label("Refresh");
+	g_signal_connect(button_refresh, "clicked", G_CALLBACK(refreshCheckout), NULL);
+	gtk_widget_set_halign(button_refresh, GTK_ALIGN_END);
+	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_refresh, FALSE, FALSE, 5);
 
 	GtkWidget *top_bar_spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_widget_set_hexpand(top_bar_spacer, TRUE);  //make spacer expand to take up middle space of top bar
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), top_bar_spacer, TRUE, TRUE, 0);
 
-	GtkWidget *button_refresh = gtk_button_new_with_label("Refresh");
-	g_signal_connect(button_refresh, "clicked", G_CALLBACK(refreshCheckout), NULL);
-	gtk_widget_set_halign(button_refresh, GTK_ALIGN_END);
-	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_refresh, FALSE, FALSE, 5);
+	GtkWidget *button_checkout_admin_login = gtk_button_new_with_label("Admin Login");
+	g_signal_connect(button_checkout_admin_login, "clicked", G_CALLBACK(openAdminLoginPage), stack);
+	gtk_widget_set_halign(button_admin_login, GTK_ALIGN_END);
+	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_checkout_admin_login, FALSE, FALSE, 5);
 
 	//Create checkout list store
 	checkout_store = gtk_list_store_new(3, G_TYPE_INT,  G_TYPE_STRING, G_TYPE_DOUBLE);
@@ -385,7 +401,7 @@ int main(int argc, char *argv[]) {
 	***************** */
 	GtkWidget *admin_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
 
-	//Create top bar with back button
+	//Create top bar with back and refresh buttons
 	GtkWidget *admin_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
 	GtkWidget *button_admin_back = gtk_button_new_with_label("Back");
@@ -393,12 +409,15 @@ int main(int argc, char *argv[]) {
 	gtk_widget_set_halign(button_admin_back, GTK_ALIGN_START);
 	gtk_box_pack_start(GTK_BOX(admin_top_bar), button_admin_back, FALSE, FALSE, 5);
 
-	//Create simple label for now (TODO put checkout like interface)
-    GtkWidget *admin_label = gtk_label_new("hello admin :)");
+	GtkWidget *button_admin_refresh = gtk_button_new_with_label("Refresh");
+	g_signal_connect(button_admin_refresh, "clicked", G_CALLBACK(refreshCheckout), NULL);
+	gtk_widget_set_halign(button_refresh, GTK_ALIGN_END);
+	gtk_box_pack_start(GTK_BOX(admin_top_bar), button_admin_refresh, FALSE, FALSE, 5);
+
+	//Create table of scanned items
 
 	//Pack admin page
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_top_bar, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(admin_page), admin_label, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), admin_page, "admin");
 
 

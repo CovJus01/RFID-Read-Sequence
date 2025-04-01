@@ -112,7 +112,7 @@ void get_tag(sqlite3 * db, char tagID[], char* itemID,int buffersize) {
     itemID[buffersize-1] = '\0';
 }
 
-Item* get_item(sqlite3 * db,char * itemID) {
+int get_item(sqlite3* db, char* itemID, Item* item) {
 
     int status;
     sqlite3_stmt * statement_ptr;
@@ -128,13 +128,12 @@ Item* get_item(sqlite3 * db,char * itemID) {
     status = sqlite3_step(statement_ptr);
 
 	//Pack item information into Item struct instance
-	Item* item_info = malloc(sizeof(Item));
 	const unsigned char *description = sqlite3_column_text(statement_ptr,1);
-	item_info->description = malloc(strlen((const char*)description) + 1);
-	strcpy((char*)item_info->description, (const char*)description);
-    item_info->price = sqlite3_column_int(statement_ptr,2);
+	item->description = malloc(strlen((const char*)description) + 1);
+	strcpy((char*)item->description, (const char*)description);
+    item->price = sqlite3_column_int(statement_ptr,2);
 
     status = sqlite3_finalize(statement_ptr);
 
-    return item_info;
+    return 0;
 }
