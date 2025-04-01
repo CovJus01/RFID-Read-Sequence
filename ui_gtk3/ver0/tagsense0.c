@@ -26,7 +26,6 @@
 /* ********************************************
  * Definitions
  * ********************************************/
- //TODO implement admin user/pass in database?
  #define ADMIN_USER "admin"
  #define ADMIN_PASS "1234"
 
@@ -42,11 +41,9 @@
 //Global GUI variables
 GtkWidget *stack;
 GtkListStore *checkout_store;
+GtkListStore *admin_store;
 Item *read_item;
 LoginInfo *login_info;
-
-//Mutex lock to ensure the program will only try to do one RFID read at once
-pthread_mutex_t rfid_mutex;
 
 //Initialized reader global variables, required memory for the whole process flow
 extern TMR_Reader r, *rp;
@@ -69,11 +66,6 @@ sqlite3 *db;
 /* ********************************************
  * Function definitions
  * ********************************************/
-//Function to add item to the checkout list
-//
-//
-//
-
 void load_css(void) {
     GtkCssProvider *provider = gtk_css_provider_new();
     GdkScreen *screen = gdk_screen_get_default();
@@ -83,6 +75,7 @@ void load_css(void) {
     g_object_unref(provider);  // Free the provider when done
 }
 
+//Function to add item to the checkout table
 void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *name, double price) {
 	GtkTreeIter iter;
 	gtk_list_store_append(checkout_store, &iter);
@@ -93,17 +86,59 @@ void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *na
 						-1);
 }
 
-//Function to clear checkout list before a new scan
-void clearCheckout(GtkListStore *checkout_store) {
-	gtk_list_store_clear(GTK_LIST_STORE(checkout_store));
+//Function to add item to the admin table
+void addAdminTableItem(GtkListStore *store, const gchar *item_id, const gchar *name, int price) {
+	GtkTreeIter iter;
+	gtk_list_store_append(store, &iter);
+	gtk_list_store_set(store, &iter,
+						0, item_id,
+						1, name,
+						2, price,
+						-1);
 }
 
-//Define function to be called when reading RFID tags
-void readRFIDTags() {
-	//Aquire mutex, read tags in checkout bin, and releases mutex
-	//pthread_mutex_lock(&rfid_mutex);
+//Function to clear checkout table
+void clearCheckout(GtkListStore *store) {
+	gtk_list_store_clear(GTK_LIST_STORE(store));
+}
+
+//Function to clear admin table
+void clearAdminTable(GtkListStore *store) {
+	gtk_list_store_clear(GTK_LIST_STORE(store));
+}
+
+//Define function to be called when reading RFID tags in checkout page
+void readRFIDTagsInCheckout() {
 	printf("listening for tags...\n");
-	ret = TMR_read(rp, 1000, NULL);
+	ret = TMR_read(rp, 500, NULL);
+
+	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
+	{
+		TMR_TagReadData trd;
+		char idStr[128];
+		char itemID[20];
+
+		ret = TMR_getNextTag(rp, &trd);
+		checkerr(rp, ret, 1, "fetching tag");
+
+		TMR_bytesToHex(trd.tag.epc, trd.tag.epcByteCount, idStr);
+
+		get_tag(db, idStr, itemID, sizeof(itemID));
+
+		//Filter out non-registered tags from checkout table
+		if (strcmp(itemID, "0") != 0) {
+			get_item(db, itemID, read_item);
+
+			//Add item to checkout store
+			addCheckoutItem(checkout_store, 1, read_item->description, read_item->price);
+		}
+	}
+}
+
+//Define function to be called when reading RFID tags in admin page
+void readRFIDTagsInAdmin() {
+	printf("listening for tags...\n");
+	ret = TMR_read(rp, 500, NULL);
 
 	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
 	{
@@ -120,30 +155,38 @@ void readRFIDTags() {
 		get_item(db, itemID, read_item);
 
 		//Add item to checkout store
-		addCheckoutItem(checkout_store, 1, read_item->description, read_item->price);
+		addAdminTableItem(admin_store, itemID, read_item->description, read_item->price);
 	}
-	//pthread_mutex_unlock(&rfid_mutex);
 }
 
 //Deconstructor callback function to clear memory when UI is closed
 void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
-	if (db)
+	if (db) {
 		printf("closing database...\n");
 		sqlite3_close(db);
-	if (rp)
+	}
+
+	if (rp) {
 		TMR_destroy(rp);
 		printf("freeing rp...\n");
+	}
+
 	//Free memory of read item
-	if (read_item->description)
+	if (read_item->description) {
 		free(read_item->description);
 		printf("freeing item struct description...\n");
-	if (read_item)
+	}
+
+	if (read_item) {
 		printf("freeing item struct...\n");
 		free(read_item);
-	if (login_info)
+	}
+
+	if (login_info)	{
 		printf("freeing login struct...\n");
 		g_free(login_info);
-
+	}
+	
 	printf("quitting main gtk thread...\n");
 	gtk_main_quit();
 }
@@ -153,7 +196,7 @@ void openCheckoutPage(GtkWidget *widget, gpointer stack) {
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "checkout");
 
 	//Read RFID tags and update checkout store
-	readRFIDTags();
+	readRFIDTagsInCheckout();
 }
 
 //Button callback function to switch to admin login page
@@ -166,8 +209,9 @@ void openAdminLoginPage(GtkWidget *widget, gpointer stack) {
 
 //Button callback function to switch to startup page
 void openStartupPage(GtkWidget *widget, gpointer stack) {
-	//Clear checkout list
+	//Clear tables 
 	clearCheckout(checkout_store);
+	clearAdminTable(admin_store);
 
 	//Open startup page
 	gtk_stack_set_visible_child_name(GTK_STACK(stack), "startup");
@@ -179,7 +223,16 @@ void refreshCheckout(GtkWidget *widget, gpointer data) {
 	clearCheckout(checkout_store);
 
 	//Read RFID tags and update checkout store
-	readRFIDTags();
+	readRFIDTagsInCheckout();
+}
+
+//Button callback function to re-read the RFID tags while on the admin page ("refresh")
+void refreshAdminTable(GtkWidget *widget, gpointer data) {
+	//Clear checkout list
+	clearAdminTable(admin_store);
+
+	//Read RFID tags and update admin store
+	readRFIDTagsInAdmin();
 }
 
 //Button callback function to switch to attemp admin login from admin login page
@@ -218,11 +271,6 @@ int main(int argc, char *argv[]) {
 
 	// Initialize the reader
 	reader_init();
-
-	if (pthread_mutex_init(&rfid_mutex, NULL) != 0) {
-		printf("Error in initializing RFID mutex!\n");
-	}
-
 	printf("RFID reader initialized\n");
 
 	if(sql_status != SQLITE_OK) {
@@ -239,7 +287,7 @@ int main(int argc, char *argv[]) {
 
 	// Create the table if it is not created yet
 	sql_status = create_table(db);
-	if (sql_status != SQLITE_OK){
+	if (sql_status != SQLITE_OK) {
 
 		//Get error
 		const char * errmsg = sqlite3_errmsg(db);
@@ -430,15 +478,43 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(admin_top_bar), button_admin_back, FALSE, FALSE, 5);
 
 	GtkWidget *button_admin_refresh = gtk_button_new_with_label("Refresh");
-	g_signal_connect(button_admin_refresh, "clicked", G_CALLBACK(refreshCheckout), NULL);
-	gtk_widget_set_halign(button_refresh, GTK_ALIGN_END);
+	g_signal_connect(button_admin_refresh, "clicked", G_CALLBACK(refreshAdminTable), NULL);
+	gtk_widget_set_halign(button_admin_refresh, GTK_ALIGN_END);
 	gtk_box_pack_start(GTK_BOX(admin_top_bar), button_admin_refresh, FALSE, FALSE, 5);
 
-	//Create table of scanned items
+	//Create admin list store (columns: item id, item description, item price) 
+	admin_store = gtk_list_store_new(3, G_TYPE_STRING,  G_TYPE_STRING, G_TYPE_INT);
+
+	//Create admin tree view
+	GtkWidget *admin_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(admin_store));
+
+	//Add columns
+	GtkCellRenderer *admin_renderer;
+	GtkTreeViewColumn *admin_col;
+
+	//Define item id column
+	admin_renderer = gtk_cell_renderer_text_new();
+	admin_col = gtk_tree_view_column_new_with_attributes("Item ID", admin_renderer, "text", 0, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(admin_tree_view), admin_col);
+	
+	//Define name column
+	admin_renderer = gtk_cell_renderer_text_new();
+	admin_col = gtk_tree_view_column_new_with_attributes("Name", admin_renderer, "text", 1, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(admin_tree_view), admin_col);
+
+	//Define price column
+	admin_renderer = gtk_cell_renderer_text_new();
+	admin_col = gtk_tree_view_column_new_with_attributes("Price ($)", admin_renderer, "text", 2, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(admin_tree_view), admin_col);
+
+	//Create scroll window for table
+	GtkWidget *admin_scroll_window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(admin_scroll_window), admin_tree_view);
 
 	//Pack admin page
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_top_bar, FALSE, FALSE, 5);
 	gtk_stack_add_named(GTK_STACK(stack), admin_page, "admin");
+	gtk_box_pack_start(GTK_BOX(admin_page), admin_scroll_window, TRUE, TRUE, 5);
 
 
 	//Link stack switcher with stack
