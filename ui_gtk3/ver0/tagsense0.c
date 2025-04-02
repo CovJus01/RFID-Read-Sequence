@@ -48,6 +48,7 @@ GtkWidget *price_details_label; //label for price information in checkout page
 int item_count; //count for checkout information
 double total; //total final price for checkout information
 LoginInfo *login_info; //struct pointer for admin login information
+const char* idStrs[100]; //string array to hold RFIDs read
 
 //Initialized reader global variables, required memory for the whole process flow
 extern TMR_Reader r, *rp;
@@ -178,6 +179,7 @@ void readRFIDTagsInAdmin() {
 	printf("listening for tags...\n");
 	ret = TMR_read(rp, 500, NULL);
 
+	int idStr_index = 0; //For writing idStrs to the idStrs array
 	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
 	{
 		TMR_TagReadData trd;
@@ -189,12 +191,15 @@ void readRFIDTagsInAdmin() {
 
 		TMR_bytesToHex(trd.tag.epc, trd.tag.epcByteCount, idStr);
 
+		idStrs[idStr_index++] = idStr;
+
 		get_tag(db, idStr, itemID, sizeof(itemID));
 		get_item(db, itemID, read_item);
 
 		//Add item to checkout store
 		addAdminTableItem(admin_store, itemID, read_item->description, read_item->price);
 	}
+	idStrs[idStr_index+1] = NULL; //Assign null to index at which we should stop reading idStrs
 }
 
 //Deconstructor callback function to clear memory when UI is closed
@@ -323,7 +328,7 @@ void attemptAdminLogin(GtkButton *button, gpointer data) {
 		//Read RFID tags and update admin table
 		readRFIDTagsInAdmin();
 	} else {
-		// Display an error message (you can improve this later)
+		// Display error message
 		GtkWidget *dialog = gtk_message_dialog_new(NULL,
 												   GTK_DIALOG_MODAL,
 												   GTK_MESSAGE_ERROR,
@@ -338,8 +343,21 @@ void attemptAdminLogin(GtkButton *button, gpointer data) {
 void assignTags(GtkButton *button, gpointer data) {
 	//Fetch item ID string from input data
 	const char *item_id_assign = gtk_entry_get_text((GtkEntry*)data);
-
+	
+	//TODO check for invalid input
 	printf("Received item id: %s\n", item_id_assign);
+
+	//Assign item id to all tags in idStrs array
+	int i = 0;
+	while (idStrs[i] != NULL) {
+		//TODO check for unassigned tags
+
+
+		//Update the tag to have input item id
+		update_tag_item(db, item_id_assign, idStrs[i]); 
+
+		i++;
+	}
 }
 
 /* ********************************************
@@ -696,7 +714,6 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_box, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(admin_page), button_box, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), admin_page, "admin");
-	gtk_box_pack_start(GTK_BOX(admin_page), admin_scroll_window, TRUE, TRUE, 5);
 
 
 	//Link stack switcher with stack
