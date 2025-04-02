@@ -50,26 +50,24 @@ void actStepTo(int pos) {
 void openTag() {
   //Function to open tag using servo motor.
   //TODO: fine tune. Currently just moves all the way to one end then back to start
-  int start_angle = 1;
-  int end_angle = 180;
+  int start_angle = 150;
+  int end_angle = 90;
 
-  for(int pos = start_angle; pos <= end_angle; pos += 1) {
+  for(int pos = start_angle; pos >= end_angle; pos -= 1) {
     actStepTo(pos);
   }
-  delay(1000);
-  for(int pos = end_angle; pos >= start_angle; pos -= 1) {
+  delay(500);
+  for(int pos = end_angle; pos <= start_angle; pos += 1) {
     actStepTo(pos);
   }
 }
+
 
 void loop() {
   if (tiny_switch.available()) {
     //Non-zero code received over RF. Fetch it here
     uint16_t code = tiny_switch.getReceivedValue();
 
-    for (int i=0; i<2; i++) {
-        blink_led();
-     }
 
     //Move linear actuator (servo motor) if expected code is received
     if (code == EXPECTED_CODE) {
