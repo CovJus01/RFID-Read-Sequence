@@ -484,6 +484,9 @@ int main(int argc, char *argv[]) {
 
 	//Create checkout tree view
 	GtkWidget *checkout_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(checkout_store));
+    GtkStyleContext *tree_context = gtk_widget_get_style_context(checkout_tree_view);
+    gtk_style_context_add_class(tree_context, "tree-view");
+
 
 	//Add columns
 	GtkCellRenderer *checkout_renderer;
@@ -492,28 +495,24 @@ int main(int argc, char *argv[]) {
 	//Define quantity column
 	checkout_renderer = gtk_cell_renderer_text_new();
 	checkout_col = gtk_tree_view_column_new_with_attributes("Quantity", checkout_renderer, "text", 0, NULL);
+	gtk_tree_view_column_set_fixed_width(checkout_col,200);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(checkout_tree_view), checkout_col);
 
 	//Define name column
 	checkout_renderer = gtk_cell_renderer_text_new();
 	checkout_col = gtk_tree_view_column_new_with_attributes("Name", checkout_renderer, "text", 1, NULL);
+	gtk_tree_view_column_set_fixed_width(checkout_col,600);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(checkout_tree_view), checkout_col);
 
 	//Define price column
 	checkout_renderer = gtk_cell_renderer_text_new();
 	checkout_col = gtk_tree_view_column_new_with_attributes("Price ($)", checkout_renderer, "text", 2, NULL);
+	gtk_tree_view_column_set_fixed_width(checkout_col,200);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(checkout_tree_view), checkout_col);
 
-	//Create grid for checkout summary and checkout button
-		//Main grid description
-	GtkWidget *checkout_summary_grid = gtk_grid_new();
-    GtkStyleContext *summary_context = gtk_widget_get_style_context(checkout_summary_grid);
-    gtk_style_context_add_class(summary_context, "checkout-grid");
-	gtk_grid_set_column_spacing(GTK_GRID(checkout_summary_grid), 10);
-	gtk_grid_set_row_spacing(GTK_GRID(checkout_summary_grid), 10);
 
 		//Left side: checkout summary
-	GtkWidget *checkout_summary_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+	GtkWidget *checkout_summary_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     GtkStyleContext *checkout_context = gtk_widget_get_style_context(checkout_summary_box);
     gtk_style_context_add_class(checkout_context, "checkout-box");
     gtk_widget_set_halign(checkout_summary_box, GTK_ALIGN_START);
@@ -527,32 +526,31 @@ int main(int argc, char *argv[]) {
     price_details_label = gtk_label_new("Subtotal: $0.00\nTax: $0.00\nTotal: $0.00");
     GtkStyleContext *price_details_context = gtk_widget_get_style_context(price_details_label);
     gtk_style_context_add_class(price_details_context, "summary-label");
-    gtk_box_pack_start(GTK_BOX(checkout_summary_box), checkout_item_count_label, FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(checkout_summary_box), checkout_item_count_label, TRUE, TRUE, 0);
+    gtk_box_pack_end(GTK_BOX(checkout_summary_box), price_details_label, TRUE, TRUE, 0);
 
-    gtk_box_pack_start(GTK_BOX(checkout_summary_box), checkout_item_count_label, FALSE, FALSE, 5);
-    gtk_box_pack_start(GTK_BOX(checkout_summary_box), price_details_label, FALSE, FALSE, 5);
-
-    gtk_grid_attach(GTK_GRID(checkout_summary_grid), checkout_summary_box, 0, 0, 1, 1);
 
 		//Right side: pay button
-	GtkWidget *pay_button_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
-	gtk_widget_set_valign(pay_button_box, GTK_ALIGN_CENTER);
-
 	GtkWidget *button_pay = gtk_button_new_with_label("Pay Now");
     GtkStyleContext *pay_btn_context = gtk_widget_get_style_context(button_pay);
     gtk_style_context_add_class(pay_btn_context, "pay-button");
 
 	g_signal_connect(button_pay, "clicked", G_CALLBACK(checkout), NULL);
-	gtk_box_pack_start(GTK_BOX(pay_button_box), button_pay, FALSE, FALSE, 5);
 
-	gtk_grid_attach(GTK_GRID(checkout_summary_grid), pay_button_box, 2, 0, 1, 1);
+	GtkWidget *checkout_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    GtkStyleContext *container_context = gtk_widget_get_style_context(checkout_box);
+    gtk_style_context_add_class(container_context, "container-box");
 
 	//Pack checkout page
 	GtkWidget *checkout_scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    GtkStyleContext *scroll_context = gtk_widget_get_style_context(checkout_scroll_window);
+    gtk_style_context_add_class(scroll_context, "scroll-summary");
+
 	gtk_container_add(GTK_CONTAINER(checkout_scroll_window), checkout_tree_view);
+	gtk_box_pack_start(GTK_BOX(checkout_box), checkout_scroll_window, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(checkout_box), checkout_summary_box, TRUE, TRUE, 0);
 	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_top_bar, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_scroll_window, TRUE, TRUE, 5);
-	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_summary_grid, FALSE, FALSE, 10);
+	gtk_box_pack_start(GTK_BOX(checkout_page), checkout_box, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(checkout_page), button_pay, FALSE, FALSE, 0);
 
 	gtk_stack_add_named(GTK_STACK(stack), checkout_page, "checkout");
