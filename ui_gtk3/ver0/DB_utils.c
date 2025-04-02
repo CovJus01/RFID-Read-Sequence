@@ -31,15 +31,29 @@ int add_tag(sqlite3 * db, char tagID[]) {
     sqlite3_stmt * statement_ptr;
     char command[200];
 
-    strcpy(command,"INSERT INTO Tags (tagID, itemID, status) VALUES('");
+    strcpy(command,"SELECT tagID,itemID,status FROM Tags WHERE tagID = '");
     strcat(command, tagID);
-    strcat(command, "', '0', 0)");
+    strcat(command, "'");
 
-    //NEED to work out logic to add tag ID into this string
-    status = sqlite3_prepare_v2(db, command, -1, &statement_ptr, 0);
+    status = sqlite3_prepare_v2(db,command, -1, &statement_ptr, 0);
 
+    //Figure out what to do with the retrieved data
     status = sqlite3_step(statement_ptr);
-    status = sqlite3_finalize(statement_ptr);
+
+	
+	if(status == SQLITE_ROW) {
+		status = sqlite3_finalize(statement_ptr);
+
+		strcpy(command,"INSERT INTO Tags (tagID, itemID, status) VALUES('");
+		strcat(command, tagID);
+		strcat(command, "', '0', 0)");
+
+		//NEED to work out logic to add tag ID into this string
+		status = sqlite3_prepare_v2(db, command, -1, &statement_ptr, 0);
+
+		status = sqlite3_step(statement_ptr);
+		status = sqlite3_finalize(statement_ptr);
+	}
 
     return status;
 }
