@@ -277,17 +277,20 @@ void refreshAdminTable(GtkWidget *widget, gpointer data) {
 void checkout(GtkWidget *widget, gpointer data) {
 	//Create dialog to confirm purchase
 	GtkWidget *confirm_purchase_dialog = gtk_dialog_new_with_buttons(
-														"confirm purchase",
+														"Confirm Purchase",
 														NULL,
 														GTK_DIALOG_MODAL,
 														"Cancel", GTK_RESPONSE_CANCEL,
 														"Confirm", GTK_RESPONSE_ACCEPT,
 														NULL
 													);
+    GtkStyleContext *confirm_context = gtk_widget_get_style_context(confirm_purchase_dialog);
+    gtk_style_context_add_class(confirm_context, "confirmation-box");
 	
 	//Create dialog content box
 	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(confirm_purchase_dialog));
 
+	gtk_widget_set_size_request(content_area, 300,300);
 	//Create label with formatted text
 	char content_str[100];
 	snprintf(content_str, sizeof(content_str), "Total Items: %d\nTotal: $%.2f", item_count, total);
@@ -570,13 +573,23 @@ int main(int argc, char *argv[]) {
 
 	//Create username and password prompts
 	GtkWidget *username_label = gtk_label_new("Username:");
+    GtkStyleContext *username_context = gtk_widget_get_style_context(username_label);
+    gtk_style_context_add_class(username_context, "admin-label");
 	GtkWidget *username_entry = gtk_entry_new();
+    username_context = gtk_widget_get_style_context(username_entry);
+    gtk_style_context_add_class(username_context, "admin-field");
 
 	GtkWidget *password_label = gtk_label_new("Password:");
+    GtkStyleContext *password_context = gtk_widget_get_style_context(password_label);
+    gtk_style_context_add_class(password_context, "admin-label");
 	GtkWidget *password_entry = gtk_entry_new();
+    password_context = gtk_widget_get_style_context(password_entry);
+    gtk_style_context_add_class(password_context, "admin-field");
 	gtk_entry_set_visibility(GTK_ENTRY(password_entry), FALSE); //hides password text
 
 	GtkWidget *button_submit_login = gtk_button_new_with_label("Submit");
+    GtkStyleContext *submit_context = gtk_widget_get_style_context(button_submit_login);
+    gtk_style_context_add_class(submit_context, "submit-button");
 
 	//Prepare login information
 	login_info->username = GTK_ENTRY(username_entry);
@@ -617,6 +630,8 @@ int main(int argc, char *argv[]) {
 
 	//Create admin tree view
 	GtkWidget *admin_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(admin_store));
+    tree_context = gtk_widget_get_style_context(admin_tree_view);
+    gtk_style_context_add_class(tree_context, "tree-view");
 
 	//Add columns
 	GtkCellRenderer *admin_renderer;
@@ -625,20 +640,29 @@ int main(int argc, char *argv[]) {
 	//Define item id column
 	admin_renderer = gtk_cell_renderer_text_new();
 	admin_col = gtk_tree_view_column_new_with_attributes("Item ID", admin_renderer, "text", 0, NULL);
+	gtk_tree_view_column_set_fixed_width(admin_col,200);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(admin_tree_view), admin_col);
 
 	//Define name column
 	admin_renderer = gtk_cell_renderer_text_new();
 	admin_col = gtk_tree_view_column_new_with_attributes("Name", admin_renderer, "text", 1, NULL);
+	gtk_tree_view_column_set_fixed_width(admin_col,800);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(admin_tree_view), admin_col);
 
 	//Define price column
 	admin_renderer = gtk_cell_renderer_text_new();
 	admin_col = gtk_tree_view_column_new_with_attributes("Price ($)", admin_renderer, "text", 2, NULL);
+	gtk_tree_view_column_set_fixed_width(admin_col,200);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(admin_tree_view), admin_col);
+
+	GtkWidget *admin_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    container_context = gtk_widget_get_style_context(admin_box);
+    gtk_style_context_add_class(container_context, "container-box");
 
 	//Create scroll window for table
 	GtkWidget *admin_scroll_window = gtk_scrolled_window_new(NULL, NULL);
+    scroll_context = gtk_widget_get_style_context(admin_scroll_window);
+    gtk_style_context_add_class(scroll_context, "scroll-summary");
 	gtk_container_add(GTK_CONTAINER(admin_scroll_window), admin_tree_view);
 
 	//Create label entry, and button for assigning tags to a desired item id
@@ -652,8 +676,25 @@ int main(int argc, char *argv[]) {
 	//Connect the assign button to the callback function
 	g_signal_connect(button_assign_tags, "clicked", G_CALLBACK(assignTags), item_id_assign);
 
+	GtkWidget *button_update = gtk_button_new_with_label("Update Tags");
+    GtkStyleContext *update_btn_context = gtk_widget_get_style_context(button_update);
+    gtk_style_context_add_class(update_btn_context, "update-button");
+
+	GtkWidget *button_add = gtk_button_new_with_label("Add Tags");
+    GtkStyleContext *add_btn_context = gtk_widget_get_style_context(button_add);
+    gtk_style_context_add_class(add_btn_context, "add-button");
+
+	GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
+
+
+	gtk_box_pack_start(GTK_BOX(button_box), button_update, TRUE, TRUE, 5);
+	gtk_box_pack_end(GTK_BOX(button_box), button_add, TRUE, TRUE, 0);
 	//Pack admin page
+
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_top_bar, FALSE, FALSE, 5);
+	gtk_box_pack_start(GTK_BOX(admin_box), admin_scroll_window, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(admin_page), admin_box, FALSE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(admin_page), button_box, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), admin_page, "admin");
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_scroll_window, TRUE, TRUE, 5);
 
