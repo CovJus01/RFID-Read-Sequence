@@ -39,11 +39,15 @@
  * Global variables
  * ********************************************/
 //Global GUI variables
-GtkWidget *stack;
-GtkListStore *checkout_store;
-GtkListStore *admin_store;
-Item *read_item;
-LoginInfo *login_info;
+GtkWidget *stack; //gtk stack for multiple page GUI
+GtkListStore *checkout_store; //gtk store for checkout page's item table
+GtkListStore *admin_store; //gtk store for admin page's item table
+Item *read_item; //struct pointer for item information pulled from database
+GtkWidget *checkout_item_count_label; //label for item count in checkout page
+GtkWidget *price_details_label; //label for price information in checkout page
+int item_count; //count for checkout information
+double total; //total final price for checkout information
+LoginInfo *login_info; //struct pointer for admin login information
 
 //Initialized reader global variables, required memory for the whole process flow
 extern TMR_Reader r, *rp;
@@ -76,7 +80,7 @@ void load_css(void) {
 }
 
 //Function to add item to the checkout table
-void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *name, double price) {
+void addCheckoutItem(GtkListStore *checkout_store, int quantity, const gchar *name, int price) {
 	GtkTreeIter iter;
 	gtk_list_store_append(checkout_store, &iter);
 	gtk_list_store_set(checkout_store, &iter,
@@ -107,8 +111,32 @@ void clearAdminTable(GtkListStore *store) {
 	gtk_list_store_clear(GTK_LIST_STORE(store));
 }
 
+void updateCheckoutItemCount(int count) {
+	//Format a string for the new item count label
+	char item_count_str[100];
+	snprintf(item_count_str, sizeof(item_count_str),"Item Count: %d", count);
+
+	//Update the checkout price details label
+	gtk_label_set_text(GTK_LABEL(checkout_item_count_label), item_count_str);
+}
+
+//Function to update price details in checkout page price summary box
+void updatePriceDetails(double subtotal, double tax, double total) {
+	//Format a string for the new price details
+	char price_details_str[100];
+	snprintf(price_details_str, sizeof(price_details_str),"Subtotal: $%.2f\nTax: $%.2f\nTotal: $%.2f", subtotal, tax, total);
+
+	//Update the checkout price details label
+	gtk_label_set_text(GTK_LABEL(price_details_label), price_details_str);
+}
+
 //Define function to be called when reading RFID tags in checkout page
 void readRFIDTagsInCheckout() {
+	//Initialize variables for checkout summary
+	item_count = 0;
+	double subtotal = 0;
+	total = 0;
+
 	printf("listening for tags...\n");
 	ret = TMR_read(rp, 500, NULL);
 
@@ -131,8 +159,18 @@ void readRFIDTagsInCheckout() {
 
 			//Add item to checkout store
 			addCheckoutItem(checkout_store, 1, read_item->description, read_item->price);
+
+			//Keep checkout summary information
+			item_count++;
+			subtotal += read_item->price;
 		}
 	}
+
+	//Update checkout summary information
+	updateCheckoutItemCount(item_count);
+	double tax = subtotal * 0.13;
+	total = subtotal + tax;
+	updatePriceDetails(subtotal, tax, total);
 }
 
 //Define function to be called when reading RFID tags in admin page
@@ -231,8 +269,43 @@ void refreshAdminTable(GtkWidget *widget, gpointer data) {
 	//Clear checkout list
 	clearAdminTable(admin_store);
 
-	//Read RFID tags and update admin store
+	//Read RFID tags and update admin table
 	readRFIDTagsInAdmin();
+}
+
+//Button callback function to checkout and pay
+void checkout(GtkWidget *widget, gpointer data) {
+	//Create dialog to confirm purchase
+	GtkWidget *confirm_purchase_dialog = gtk_dialog_new_with_buttons(
+														"confirm purchase",
+														NULL,
+														GTK_DIALOG_MODAL,
+														"Cancel", GTK_RESPONSE_CANCEL,
+														"Confirm", GTK_RESPONSE_ACCEPT,
+														NULL
+													);
+	
+	//Create dialog content box
+	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(confirm_purchase_dialog));
+
+	//Create label with formatted text
+	char content_str[100];
+	snprintf(content_str, sizeof(content_str), "Total Items: %d\nTotal: $%.2f", item_count, total);
+	GtkWidget *content_label = gtk_label_new(content_str);
+
+	gtk_box_pack_start(GTK_BOX(content_area), content_label, FALSE, FALSE, 10);
+	gtk_widget_show_all(confirm_purchase_dialog);
+		
+	//Run dialog and fetch user response
+	gint response = gtk_dialog_run(GTK_DIALOG(confirm_purchase_dialog));
+
+	if (response == GTK_RESPONSE_ACCEPT) {
+		char *args[] = {"./tx", "3000"}; //TODO know expected code of all tags in bin and send tx for all
+		execv(args[0], args);
+		openStartupPage(NULL, stack);
+	}
+
+	gtk_widget_destroy(confirm_purchase_dialog);
 }
 
 //Button callback function to switch to attemp admin login from admin login page
@@ -244,6 +317,9 @@ void attemptAdminLogin(GtkButton *button, gpointer data) {
 	if (g_strcmp0(username, ADMIN_USER) == 0 && g_strcmp0(password, ADMIN_PASS) == 0) {
 		// Login successful, switch to the admin page
 		gtk_stack_set_visible_child_name(GTK_STACK(stack), "admin");
+
+		//Read RFID tags and update admin table
+		readRFIDTagsInAdmin();
 	} else {
 		// Display an error message (you can improve this later)
 		GtkWidget *dialog = gtk_message_dialog_new(NULL,
@@ -326,8 +402,12 @@ int main(int argc, char *argv[]) {
 	read_item = malloc(sizeof(Item));
 	read_item->description = NULL;
 
-	//Create login info struct to store potentail admin login information
+	//Create login info struct to store potential admin login information
 	login_info = g_malloc(sizeof(LoginInfo));
+
+	//Define initial checkout item count and total
+	item_count = 0;
+	total = 0;
 
 	/* **************
 	* startup page
@@ -393,7 +473,7 @@ int main(int argc, char *argv[]) {
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_checkout_admin_login, FALSE, FALSE, 5);
 
 	//Create checkout list store
-	checkout_store = gtk_list_store_new(3, G_TYPE_INT,  G_TYPE_STRING, G_TYPE_DOUBLE);
+	checkout_store = gtk_list_store_new(3, G_TYPE_INT,  G_TYPE_STRING, G_TYPE_INT);
 
 	//Create checkout tree view
 	GtkWidget *checkout_tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(checkout_store));
@@ -429,16 +509,24 @@ int main(int argc, char *argv[]) {
     gtk_widget_set_halign(checkout_summary_box, GTK_ALIGN_START);
     gtk_widget_set_valign(checkout_summary_box, GTK_ALIGN_CENTER);
 
-    GtkWidget *item_count_label = gtk_label_new(NULL);
-    gtk_label_set_markup(GTK_LABEL(item_count_label), "<span font='24'><b>Total item Count:</b></span>");
-
-    GtkWidget *price_details_label = gtk_label_new("Discount: $$\nTax: $$\nTotal: $$");
-    gtk_widget_set_halign(price_details_label, GTK_ALIGN_END);
-
-    gtk_box_pack_start(GTK_BOX(checkout_summary_box), item_count_label, FALSE, FALSE, 5);
+    checkout_item_count_label = gtk_label_new(NULL);
+    gtk_label_set_markup(GTK_LABEL(checkout_item_count_label), "Item Count: 0");
+    price_details_label = gtk_label_new("Subtotal: $0.00\nTax: $0.00\nTotal: $0.00");
+    gtk_box_pack_start(GTK_BOX(checkout_summary_box), checkout_item_count_label, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(checkout_summary_box), price_details_label, FALSE, FALSE, 5);
 
     gtk_grid_attach(GTK_GRID(checkout_summary_grid), checkout_summary_box, 0, 0, 1, 1);
+
+		//Right side: checkout button
+	GtkWidget *checkout_button_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
+    gtk_widget_set_valign(checkout_button_box, GTK_ALIGN_CENTER);
+
+	GtkWidget *button_checkout = gtk_button_new_with_label("Checkout");
+	gtk_widget_set_size_request(button_checkout, 150, 80);
+	g_signal_connect(button_checkout, "clicked", G_CALLBACK(checkout), NULL);
+	gtk_box_pack_start(GTK_BOX(checkout_button_box), button_checkout, FALSE, FALSE, 5);
+
+	gtk_grid_attach(GTK_GRID(checkout_summary_grid), checkout_button_box, 2, 0, 1, 1);
 
 	//Pack checkout page
 	GtkWidget *checkout_scroll_window = gtk_scrolled_window_new(NULL, NULL);
