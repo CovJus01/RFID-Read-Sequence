@@ -4,8 +4,7 @@
 
 
 button {
-
-    background-color: #040404;
+    background-color: #04B515B;
     color: #FFFFFF;
     border-radius:10px;
 }
@@ -24,6 +23,20 @@ button {
 	padding: 20px;
 }
 
+.pay-button {
+    border-radius:15px;
+    color: #FFFFFF;
+    background-color: #002d04;
+    min-height: 140px;
+    min-width: 30px;
+	font-size: 46px;
+	margin-top: 0px;
+	margin-right:200px;
+	margin-bottom:100px;
+	margin-left:200px;
+	padding: 20px;
+}
+
 .tagsense-label {
     color: #002d04;
     font-size: 120px;
@@ -32,4 +45,31 @@ button {
 
 .default-background {
     background-color: #E6E6E6;
+}
+
+.checkout-box {
+    background-color: #002d04;
+    border-radius: 15px;
+    min-height: 60%;
+    min-width: 60%;
+    margin: 0px, 200px, 0px, 200px;
+    padding: 20px;
+}
+
+.checkout-grid {
+    background-color: #e6e6e6;
+    border-width: 5px;
+    border-color: #002d04;
+    border-radius: 15px;
+    color: #002d04;
+    font-size: 26px;
+    min-height: 60%;
+    min-width: 60%;
+    margin: 0px, 200px, 0px, 200px;
+    padding: 20px;
+}
+
+.summary-label {
+    color: #FFFFFF;
+    font-size: 30px;
 }
