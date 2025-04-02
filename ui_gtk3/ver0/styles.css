@@ -84,6 +84,7 @@ button {
 	background-color:#E6E6E6;
 	color: #002d04;
 	font-size: 30px;
+	min-height:50px;
 } 
 
 .summary-label {
