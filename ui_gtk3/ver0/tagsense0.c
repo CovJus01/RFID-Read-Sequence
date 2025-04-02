@@ -349,6 +349,7 @@ void assignTags(GtkButton *button, gpointer data) {
 	while (idStrs[i] != NULL) {
 		//TODO check for unassigned tags
 
+
 		//Update the tag to have input item id
 		update_tag_item(db, item_id_assign, idStrs[i]); 
 
