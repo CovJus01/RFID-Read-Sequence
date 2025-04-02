@@ -300,15 +300,14 @@ void checkout(GtkWidget *widget, gpointer data) {
 	gint response = gtk_dialog_run(GTK_DIALOG(confirm_purchase_dialog));
 
 	if (response == GTK_RESPONSE_ACCEPT) {
-		char *args[] = {"./tx", "3000"}; //TODO know expected code of all tags in bin and send tx for all
-		execv(args[0], args);
+		system("./tx 11981");
 		openStartupPage(NULL, stack);
 	}
 
 	gtk_widget_destroy(confirm_purchase_dialog);
 }
 
-//Button callback function to switch to attemp admin login from admin login page
+//Button callback function to attempt admin login from admin login page
 void attemptAdminLogin(GtkButton *button, gpointer data) {
 	LoginInfo *login_info = (LoginInfo*) data;
 	const char *username = gtk_entry_get_text(login_info->username);
@@ -330,6 +329,14 @@ void attemptAdminLogin(GtkButton *button, gpointer data) {
 		gtk_dialog_run(GTK_DIALOG(dialog));
 		gtk_widget_destroy(dialog);
 	}
+}
+
+//Button callback function to assign item IDs to tags from admin page
+void assignTags(GtkButton *button, gpointer data) {
+	//Fetch item ID string from input data
+	const char *item_id_assign = gtk_entry_get_text((GtkEntry*)data);
+
+	printf("Received item id: %s\n", item_id_assign);
 }
 
 /* ********************************************
@@ -635,6 +642,17 @@ int main(int argc, char *argv[]) {
 	//Create scroll window for table
 	GtkWidget *admin_scroll_window = gtk_scrolled_window_new(NULL, NULL);
 	gtk_container_add(GTK_CONTAINER(admin_scroll_window), admin_tree_view);
+
+	//Create label entry, and button for assigning tags to a desired item id
+	GtkWidget *item_id_prompt_label = gtk_label_new("Assign item id:");
+	GtkWidget *item_id_prompt_entry = gtk_entry_new();
+	GtkWidget *button_assign_tags = gtk_button_new_with_label("Assign");
+
+	//Prepare read item id prompt
+	GtkEntry *item_id_assign = GTK_ENTRY(item_id_prompt_entry);
+
+	//Connect the assign button to the callback function
+	g_signal_connect(button_assign_tags, "clicked", G_CALLBACK(assignTags), item_id_assign);
 
 	//Pack admin page
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_top_bar, FALSE, FALSE, 5);
