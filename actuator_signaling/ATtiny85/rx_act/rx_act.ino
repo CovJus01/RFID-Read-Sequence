@@ -33,7 +33,7 @@ void actStepTo(int pos) {
 void openTag() {
   //Function to open tag using servo motor.
   int start_angle = 150;
-  int end_angle = 90;
+  int end_angle = 70;
 
   for(int pos = start_angle; pos >= end_angle; pos -= 1) {
     actStepTo(pos);
