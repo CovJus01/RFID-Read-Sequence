@@ -25,3 +25,4 @@ int get_item(sqlite3 * db, char * itemID, Item* item);
 
 int check_assigned(sqlite3 * db, char tagID[]);
 
+int check_itemID_exists(sqlite3 * db, char * itemID);

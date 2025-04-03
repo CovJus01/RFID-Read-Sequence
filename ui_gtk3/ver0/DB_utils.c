@@ -176,3 +176,23 @@ int check_assigned(sqlite3 * db, char tagID[]) {
     else
         return 0;
 }
+
+int check_itemID_exists(sqlite3 * db, char * itemID) {
+    //Returns 1 if the itemID exists in the database, 0 otherwise
+
+    int status;
+    sqlite3_stmt * statement_ptr;
+    char command[200];
+
+    strcpy(command,"SELECT * FROM items WHERE itemID = '");
+    strcat(command, itemID);
+    strcat(command, "'");
+
+    sqlite3_prepare_v2(db,command, -1, &statement_ptr, 0);
+    status = sqlite3_step(statement_ptr);
+
+    if (status == SQLITE_ROW)
+        return 1;
+    else
+        return 0;
+}
