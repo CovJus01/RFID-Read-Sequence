@@ -41,7 +41,7 @@ int add_tag(sqlite3 * db, char tagID[]) {
     status = sqlite3_step(statement_ptr);
 
 	
-	if(status == SQLITE_ROW) {
+	if(status == SQLITE_DONE) {
 		status = sqlite3_finalize(statement_ptr);
 
 		strcpy(command,"INSERT INTO Tags (tagID, itemID, status) VALUES('");

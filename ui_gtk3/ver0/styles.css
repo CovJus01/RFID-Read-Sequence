@@ -11,6 +11,17 @@ button {
 	font-size: 30px;
 }
 
+.admin-button {
+    background-color: #E6E6E6;
+	background-image: url("./images/logo.png");
+	background-size: contain;  
+	background-repeat: no-repeat;
+	background-position: center;
+	min-width: 160px;
+	min-height: 100px;
+	border: 0px none #000000;
+}
+
 .start-button {
     border-radius:15px;
     color: #FFFFFF;

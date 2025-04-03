@@ -29,6 +29,8 @@
  #define ADMIN_USER "admin"
  #define ADMIN_PASS "1234"
 
+ #define IDSTRS_SIZE 100
+
  //Struct to gather admin login information for button callback function
  typedef struct {
 	GtkEntry *username;
@@ -48,7 +50,7 @@ GtkWidget *price_details_label; //label for price information in checkout page
 int item_count; //count for checkout information
 double total; //total final price for checkout information
 LoginInfo *login_info; //struct pointer for admin login information
-const char* idStrs[100]; //string array to hold RFIDs read
+char* idStrs[IDSTRS_SIZE]; //string array to hold RFIDs read
 
 //Initialized reader global variables, required memory for the whole process flow
 extern TMR_Reader r, *rp;
@@ -125,7 +127,7 @@ void updateCheckoutItemCount(int count) {
 void updatePriceDetails(double subtotal, double tax, double total) {
 	//Format a string for the new price details
 	char price_details_str[100];
-	snprintf(price_details_str, sizeof(price_details_str),"Subtotal: $%.2f\nTax: $%.2f\nTotal: $%.2f", subtotal, tax, total);
+	snprintf(price_details_str, sizeof(price_details_str),"Subtotal:\t\t\t$%.2f\nTax:\t\t\t\t$%.2f\nTotal:\t\t\t\t$%.2f", subtotal, tax, total);
 
 	//Update the checkout price details label
 	gtk_label_set_text(GTK_LABEL(price_details_label), price_details_str);
@@ -183,7 +185,7 @@ void readRFIDTagsInAdmin() {
 	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
 	{
 		TMR_TagReadData trd;
-		char idStr[128];
+		char *idStr = (char*)malloc(128 * sizeof(char));
 		char itemID[20];
 
 		ret = TMR_getNextTag(rp, &trd);
@@ -193,11 +195,19 @@ void readRFIDTagsInAdmin() {
 
 		idStrs[idStr_index++] = idStr;
 
-		get_tag(db, idStr, itemID, sizeof(itemID));
-		get_item(db, itemID, read_item);
+		if (check_assigned(db, idStr)) {
+			//If tags exist in the database, display correct information in the table
+			get_tag(db, idStr, itemID, sizeof(itemID));
+			get_item(db, itemID, read_item);
 
-		//Add item to checkout store
-		addAdminTableItem(admin_store, itemID, read_item->description, read_item->price);
+			//Add item to checkout store
+			addAdminTableItem(admin_store, itemID, read_item->description, read_item->price);
+		}
+		else {
+			//Otherwise, show that there is no record of the tag
+			addAdminTableItem(admin_store, NULL, "No record of tag", 0);
+		}
+			
 	}
 	idStrs[idStr_index+1] = NULL; //Assign null to index at which we should stop reading idStrs
 }
@@ -228,6 +238,12 @@ void clearMemoryOnClose(GtkWidget *widget, gpointer data) {
 	if (login_info)	{
 		printf("freeing login struct...\n");
 		g_free(login_info);
+	}
+
+	//Free memory of idStrs
+	printf("freeing all strings in idStrs...\n");
+	for (int i=0; i<IDSTRS_SIZE; i++) {
+		free(idStrs[i]);
 	}
 
 	printf("quitting main gtk thread...\n");
@@ -300,10 +316,14 @@ void checkout(GtkWidget *widget, gpointer data) {
 
 	//Create label with formatted text
 	char content_str[100];
-	snprintf(content_str, sizeof(content_str), "Total Items: %d\nTotal: $%.2f", item_count, total);
+	snprintf(content_str, sizeof(content_str), "Items:\t %d\nTotal:\t $%.2f", item_count, total);
 	GtkWidget *content_label = gtk_label_new(content_str);
-
 	gtk_box_pack_start(GTK_BOX(content_area), content_label, FALSE, FALSE, 10);
+
+	//Create payment options images
+	GtkWidget *payment_options_image = gtk_image_new_from_file("./images/payment_options.png");
+	gtk_container_add(GTK_CONTAINER(content_area), payment_options_image);
+
 	gtk_widget_show_all(confirm_purchase_dialog);
 		
 	//Run dialog and fetch user response
@@ -377,9 +397,7 @@ void updateTags(GtkButton *button, gpointer data) {
 	gint response = gtk_dialog_run(GTK_DIALOG(dialog));
 
 	if (response == GTK_RESPONSE_ACCEPT) {
-		const gchar *input_item_id = gtk_entry_get_text(GTK_ENTRY(entry));
-
-		printf("Received item id: %s\n", input_item_id);
+		gchar *input_item_id = gtk_entry_get_text(GTK_ENTRY(entry));
 
 		//Check for invalid input. atoi returns 0 if no conversion from string to int is possible
 		if (atoi(input_item_id) != 0) {
@@ -388,9 +406,37 @@ void updateTags(GtkButton *button, gpointer data) {
 				//Only update tag if it is already in the database
 				if (check_assigned(db, idStrs[i])) {
 					//Update the tag to have input item id
-					update_tag_item(db, item_id_assign, idStrs[i]); 
+					update_tag_item(db, input_item_id, idStrs[i]); 
 				}
 			}
+
+			//Show that tags were updated
+			GtkWidget *update_successful_dialog = gtk_message_dialog_new(NULL,
+													   GTK_DIALOG_MODAL,
+													   GTK_MESSAGE_INFO,
+													   GTK_BUTTONS_OK,
+													   "Update request successfully sent to database!\nIt may take a minute or so for these changes to be made.");
+			GtkStyleContext *confirmation_context = gtk_widget_get_style_context(update_successful_dialog);
+			gtk_style_context_add_class(confirmation_context, "confirmation-box");
+
+			gtk_dialog_run(GTK_DIALOG(update_successful_dialog));
+			gtk_widget_destroy(update_successful_dialog);
+
+			readRFIDTagsInAdmin();
+		}
+		else {
+			//Show that tags could not be updated
+			GtkWidget *update_failed_dialog = gtk_message_dialog_new(NULL,
+													   GTK_DIALOG_MODAL,
+													   GTK_MESSAGE_ERROR,
+													   GTK_BUTTONS_OK,
+													   "Could not update tags because input item ID is not valid.");
+
+			GtkStyleContext *confirmation_context = gtk_widget_get_style_context(update_failed_dialog);
+			gtk_style_context_add_class(confirmation_context, "confirmation-box");
+
+			gtk_dialog_run(GTK_DIALOG(update_failed_dialog));
+			gtk_widget_destroy(update_failed_dialog);
 		}
 	}
 	
@@ -424,7 +470,10 @@ void addTags(GtkButton *button, gpointer data) {
 	}
 
 	//Add label to show how many tags will be added to database
-	GtkWidget *content_label = gtk_label_new("Add %d new tags to the database?", add_tag_count);
+	char add_item_str[100];
+	snprintf(add_item_str, sizeof(add_item_str),"Add %d new tags to the database?", add_tag_count);
+	GtkWidget *content_label = gtk_label_new(add_item_str);
+
 	gtk_box_pack_start(GTK_BOX(content_area), content_label, FALSE, FALSE, 10);
 
 	gtk_widget_show_all(dialog);
@@ -530,32 +579,34 @@ int main(int argc, char *argv[]) {
     GtkStyleContext *startup_context = gtk_widget_get_style_context(startup_page);
     gtk_style_context_add_class(startup_context, "default-background");
 
-	//Create top bar with back andadmin login buttons
+	//Create top bar with back and admin login buttons
 	GtkWidget *startup_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
 
 	GtkWidget *startup_top_bar_spacer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_widget_set_hexpand(startup_top_bar_spacer, TRUE);
 	gtk_box_pack_start(GTK_BOX(startup_top_bar), startup_top_bar_spacer, TRUE, TRUE, 0);
 
-	GtkWidget *button_admin_login = gtk_button_new_with_label("Admin Login");
+	GtkWidget *button_admin_login = gtk_button_new_with_label("");
 	g_signal_connect(button_admin_login, "clicked", G_CALLBACK(openAdminLoginPage), stack);
 	gtk_widget_set_halign(button_admin_login, GTK_ALIGN_END);
-	gtk_box_pack_start(GTK_BOX(startup_top_bar), button_admin_login, FALSE, FALSE, 5);
+
+    GtkStyleContext *admin_login_btn_context = gtk_widget_get_style_context(button_admin_login);
+    gtk_style_context_add_class(admin_login_btn_context, "admin-button");
+
+	gtk_box_pack_start(GTK_BOX(startup_top_bar), button_admin_login, FALSE, FALSE, 10);
 
 	//Create start button
 	GtkWidget *button_start = gtk_button_new_with_label("Start");
     GtkStyleContext *start_btn_context = gtk_widget_get_style_context(button_start);
     gtk_style_context_add_class(start_btn_context, "start-button");
-
-	//Create label
-	GtkWidget *label1 = gtk_label_new("TagSense");
-    GtkStyleContext *tagsense_context = gtk_widget_get_style_context(label1);
-    gtk_style_context_add_class(tagsense_context, "tagsense-label");
 	g_signal_connect(button_start, "clicked", G_CALLBACK(openCheckoutPage), stack);
+
+	//Create image with nice tagsense title font
+	GtkWidget *tagsense_title_image = gtk_image_new_from_file("./images/title.png");
 
 	//Pack startup page
 	gtk_box_pack_start(GTK_BOX(startup_page), startup_top_bar, FALSE, FALSE, 5);
-	gtk_box_pack_start(GTK_BOX(startup_page), label1, TRUE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(startup_page), tagsense_title_image, TRUE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(startup_page), button_start, FALSE, FALSE, 0);
 	gtk_stack_add_named(GTK_STACK(stack), startup_page, "startup");
 
@@ -563,6 +614,8 @@ int main(int argc, char *argv[]) {
 	* checkout page
 	***************** */
 	GtkWidget *checkout_page = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
+    GtkStyleContext *checkout_page_context = gtk_widget_get_style_context(checkout_page);
+    gtk_style_context_add_class(checkout_page_context, "default-background");
 
 	//Create top bar with back, refresh, and admin login buttons
 	GtkWidget *checkout_top_bar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 5);
@@ -581,9 +634,13 @@ int main(int argc, char *argv[]) {
 	gtk_widget_set_hexpand(top_bar_spacer, TRUE);  //make spacer expand to take up middle space of top bar
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), top_bar_spacer, TRUE, TRUE, 0);
 
-	GtkWidget *button_checkout_admin_login = gtk_button_new_with_label("Admin Login");
+	GtkWidget *button_checkout_admin_login = gtk_button_new_with_label("");
 	g_signal_connect(button_checkout_admin_login, "clicked", G_CALLBACK(openAdminLoginPage), stack);
 	gtk_widget_set_halign(button_admin_login, GTK_ALIGN_END);
+
+    GtkStyleContext *checkout_admin_login_btn_context = gtk_widget_get_style_context(button_checkout_admin_login);
+    gtk_style_context_add_class(checkout_admin_login_btn_context, "admin-button");
+
 	gtk_box_pack_start(GTK_BOX(checkout_top_bar), button_checkout_admin_login, FALSE, FALSE, 5);
 
 	//Create checkout list store
@@ -630,7 +687,7 @@ int main(int argc, char *argv[]) {
     gtk_style_context_add_class(item_count_context, "summary-label");
     //gtk_label_set_markup(GTK_LABEL(checkout_item_count_label), "Item Count: 0");
 
-    price_details_label = gtk_label_new("Subtotal: $0.00\nTax: $0.00\nTotal: $0.00");
+    price_details_label = gtk_label_new("Subtotal:\t\t\t$0.00\nTax:\t\t\t\t$0.00\nTotal:\t\t\t\t$0.00");
     GtkStyleContext *price_details_context = gtk_widget_get_style_context(price_details_label);
     gtk_style_context_add_class(price_details_context, "summary-label");
     gtk_box_pack_start(GTK_BOX(checkout_summary_box), checkout_item_count_label, TRUE, TRUE, 0);
@@ -779,7 +836,7 @@ int main(int argc, char *argv[]) {
 	GtkWidget *button_add = gtk_button_new_with_label("Add Tags");
     GtkStyleContext *add_btn_context = gtk_widget_get_style_context(button_add);
     gtk_style_context_add_class(add_btn_context, "add-button");
-	g_signal_connect(button_update, "clicked", G_CALLBACK(addTags), NULL);
+	g_signal_connect(button_add, "clicked", G_CALLBACK(addTags), NULL);
 
 	//Pack update tags and add tags buttons into a box
 	GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
