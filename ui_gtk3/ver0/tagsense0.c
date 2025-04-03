@@ -289,6 +289,7 @@ void checkout(GtkWidget *widget, gpointer data) {
 														"Confirm", GTK_RESPONSE_ACCEPT,
 														NULL
 													);
+
     GtkStyleContext *confirm_context = gtk_widget_get_style_context(confirm_purchase_dialog);
     gtk_style_context_add_class(confirm_context, "confirmation-box");
 	
@@ -296,6 +297,7 @@ void checkout(GtkWidget *widget, gpointer data) {
 	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(confirm_purchase_dialog));
 
 	gtk_widget_set_size_request(content_area, 300,300);
+
 	//Create label with formatted text
 	char content_str[100];
 	snprintf(content_str, sizeof(content_str), "Total Items: %d\nTotal: $%.2f", item_count, total);
@@ -340,24 +342,108 @@ void attemptAdminLogin(GtkButton *button, gpointer data) {
 }
 
 //Button callback function to assign item IDs to tags from admin page
-void assignTags(GtkButton *button, gpointer data) {
-	//Fetch item ID string from input data
-	const char *item_id_assign = gtk_entry_get_text((GtkEntry*)data);
+void updateTags(GtkButton *button, gpointer data) {
+	//Create dialog box to accept admin input
+	GtkWidget *dialog = gtk_dialog_new_with_buttons("Update Tags",
+													NULL,
+													GTK_DIALOG_MODAL,
+													"Cancel", GTK_RESPONSE_CANCEL,
+													"Confirm", GTK_RESPONSE_ACCEPT,
+													NULL);
+
+	GtkStyleContext *context = gtk_widget_get_style_context(dialog);
+	gtk_style_context_add_class(context, "confirmation-box");
+
+	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+	gtk_widget_set_size_request(content_area, 300,300);
 	
-	//TODO check for invalid input
-	printf("Received item id: %s\n", item_id_assign);
+	// Create a vertical box to arrange label and entry
+    GtkWidget *box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_container_add(GTK_CONTAINER(content_area), box);
 
-	//Assign item id to all tags in idStrs array
-	int i = 0;
-	while (idStrs[i] != NULL) {
-		//TODO check for unassigned tags
+	//Create a label as a prompt
+    GtkWidget *prompt_label = gtk_label_new("Enter item ID to assign:");
+    gtk_box_pack_start(GTK_BOX(box), prompt_label, FALSE, FALSE, 0);
 
+    //Create an entry field
+    GtkWidget *entry = gtk_entry_new();
+    gtk_box_pack_start(GTK_BOX(box), entry, FALSE, FALSE, 0);
 
-		//Update the tag to have input item id
-		update_tag_item(db, item_id_assign, idStrs[i]); 
+    // Show all widgets in the dialog
+    gtk_widget_show_all(dialog);
 
-		i++;
+	//Get response from dialog, and handle accordingly
+	gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+
+	if (response == GTK_RESPONSE_ACCEPT) {
+		const gchar *input_item_id = gtk_entry_get_text(GTK_ENTRY(entry));
+
+		printf("Received item id: %s\n", input_item_id);
+
+		//Check for invalid input. atoi returns 0 if no conversion from string to int is possible
+		if (atoi(input_item_id) != 0) {
+			//Assign item id to all tags in idStrs array
+			for (int i = 0; idStrs[i] != NULL; i++) {
+				//Only update tag if it is already in the database
+				if (check_assigned(db, idStrs[i])) {
+					//Update the tag to have input item id
+					update_tag_item(db, item_id_assign, idStrs[i]); 
+				}
+			}
+		}
 	}
+	
+	//Free dialog memory after use
+    gtk_widget_destroy(dialog);
+}
+
+void addTags(GtkButton *button, gpointer data) {
+	//Create dialog box to accept admin input
+	GtkWidget *dialog = gtk_dialog_new_with_buttons("Add Tags",
+		NULL,
+		GTK_DIALOG_MODAL,
+		"Cancel", GTK_RESPONSE_CANCEL,
+		"Confirm", GTK_RESPONSE_ACCEPT,
+		NULL);
+
+	GtkStyleContext *context = gtk_widget_get_style_context(dialog);
+	gtk_style_context_add_class(context, "confirmation-box");
+
+	GtkWidget *content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
+
+	gtk_widget_set_size_request(content_area, 300,300);
+
+	//Calculate how many items will be added to database
+	int add_tag_count = 0;
+	for (int i = 0; idStrs[i] != NULL; i++) {
+		//Only count tags that are not in the database
+		if (!check_assigned(db, idStrs[i])) {
+			add_tag_count++;
+		}
+	}
+
+	//Add label to show how many tags will be added to database
+	GtkWidget *content_label = gtk_label_new("Add %d new tags to the database?", add_tag_count);
+	gtk_box_pack_start(GTK_BOX(content_area), content_label, FALSE, FALSE, 10);
+
+	gtk_widget_show_all(dialog);
+
+	//Get response from dialog, and handle accordingly
+	gint response = gtk_dialog_run(GTK_DIALOG(dialog));
+
+	if (response == GTK_RESPONSE_ACCEPT) {
+		//Add tags to database
+		for (int i = 0; idStrs[i] != NULL; i++) {
+			//Only add tags that are not in the database 
+			if (!check_assigned(db, idStrs[i])) {
+				add_tag(db, idStrs[i]);
+			}
+		}
+	}
+
+	//Free dialog memory after use
+    gtk_widget_destroy(dialog);
 }
 
 /* ********************************************
@@ -683,32 +769,24 @@ int main(int argc, char *argv[]) {
     gtk_style_context_add_class(scroll_context, "scroll-summary");
 	gtk_container_add(GTK_CONTAINER(admin_scroll_window), admin_tree_view);
 
-	//Create label entry, and button for assigning tags to a desired item id
-	GtkWidget *item_id_prompt_label = gtk_label_new("Assign item id:");
-	GtkWidget *item_id_prompt_entry = gtk_entry_new();
-	GtkWidget *button_assign_tags = gtk_button_new_with_label("Assign");
-
-	//Prepare read item id prompt
-	GtkEntry *item_id_assign = GTK_ENTRY(item_id_prompt_entry);
-
-	//Connect the assign button to the callback function
-	g_signal_connect(button_assign_tags, "clicked", G_CALLBACK(assignTags), item_id_assign);
-
+	//Create update tags button
 	GtkWidget *button_update = gtk_button_new_with_label("Update Tags");
     GtkStyleContext *update_btn_context = gtk_widget_get_style_context(button_update);
     gtk_style_context_add_class(update_btn_context, "update-button");
+	g_signal_connect(button_update, "clicked", G_CALLBACK(updateTags), NULL);
 
+	//Create add tags button
 	GtkWidget *button_add = gtk_button_new_with_label("Add Tags");
     GtkStyleContext *add_btn_context = gtk_widget_get_style_context(button_add);
     gtk_style_context_add_class(add_btn_context, "add-button");
+	g_signal_connect(button_update, "clicked", G_CALLBACK(addTags), NULL);
 
+	//Pack update tags and add tags buttons into a box
 	GtkWidget *button_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL,0);
-
-
 	gtk_box_pack_start(GTK_BOX(button_box), button_update, TRUE, TRUE, 5);
 	gtk_box_pack_end(GTK_BOX(button_box), button_add, TRUE, TRUE, 0);
+	
 	//Pack admin page
-
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_top_bar, FALSE, FALSE, 5);
 	gtk_box_pack_start(GTK_BOX(admin_box), admin_scroll_window, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(admin_page), admin_box, FALSE, FALSE, 0);

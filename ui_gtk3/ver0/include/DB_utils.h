@@ -23,3 +23,5 @@ void get_tag(sqlite3 * db, char tagID[], char * itemID, int buffersize);
 
 int get_item(sqlite3 * db, char * itemID, Item* item);
 
+int check_assigned(sqlite3 * db, char tagID[]);
+
