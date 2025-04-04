@@ -400,7 +400,7 @@ void updateTags(GtkButton *button, gpointer data) {
 		gchar *input_item_id = gtk_entry_get_text(GTK_ENTRY(entry));
 
 		//Check for invalid input. atoi returns 0 if no conversion from string to int is possible
-		if ((atoi(input_item_id) != 0) && (check_itemID_exists(input_item_id))) {
+		if ((atoi(input_item_id) != 0) && (check_itemID_exists(db, input_item_id))) {
 			//Assign item id to all tags in idStrs array
 			for (int i = 0; idStrs[i] != NULL; i++) {
 				//Only update tag if it is already in the database
@@ -422,6 +422,7 @@ void updateTags(GtkButton *button, gpointer data) {
 			gtk_dialog_run(GTK_DIALOG(update_successful_dialog));
 			gtk_widget_destroy(update_successful_dialog);
 
+			clearAdminTable(admin_store);
 			readRFIDTagsInAdmin();
 		}
 		else {
