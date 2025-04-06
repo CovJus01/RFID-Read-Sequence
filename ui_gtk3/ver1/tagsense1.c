@@ -1,6 +1,8 @@
 /* ********************************************
  * Includes
  * ********************************************/
+#include <gtk/gtk.h>
+
 //API Includes
 #include "serial_reader_imp.h"
 #include "tm_reader.h"
@@ -10,7 +12,6 @@
 #include "RFID_Utils.h"
 #include "DB_utils.h"
 #include "checkout_utils.h"
-#include "gui_utils.h"
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,14 @@ typedef struct {
    GtkEntry *username;
    GtkEntry *password;
 } LoginInfo;
+
+//Struct for storying checkout table row
+typedef struct {
+	char* itemID;
+	int quantity;
+	const gchar *description;
+	int price;
+} CheckoutTableRow;
 
 /* ********************************************
  * Global variables
@@ -130,14 +139,17 @@ void updatePriceDetails(double subtotal, double tax, double total) {
 
 //Define function to be called when reading RFID tags in checkout page
 void readRFIDTagsInCheckout() {
-	//Initialize variables for checkout summary
+	//Initialize variables for checkout table and summary
+	CheckoutTableRow table_rows[IDSTRS_SIZE];
 	item_count = 0;
 	double subtotal = 0;
 	total = 0;
 
+	//Read tags with the RFID reader
 	printf("listening for tags...\n");
 	ret = TMR_read(rp, 500, NULL);
 
+	//Process read tags, if any
 	while (TMR_SUCCESS == TMR_hasMoreTags(rp))
 	{
 		TMR_TagReadData trd;
@@ -155,13 +167,34 @@ void readRFIDTagsInCheckout() {
 		if (strcmp(itemID, "0") != 0) {
 			get_item(db, itemID, read_item);
 
-			//Add item to checkout store
-			addCheckoutItem(checkout_store, 1, read_item->description, read_item->price);
+			//Keep track of rows to add to checkout table
+			int add_new_row = 1;
+			int i = 0;
+			while (table_rows[i].itemID != NULL) {
+				if (strcmp(itemID, table_rows[i].itemID)) {
+					add_new_row = 0;
+					table_rows[i].quantity++;
+					break;
+				}
+				i++;
+			}
 
-			//Keep checkout summary information
+			if (add_new_row) {
+				table_rows[i].itemID = itemID;
+				table_rows[i].quantity = 1;
+				table_rows[i].description = read_item->description;
+				table_rows[i].price = read_item->price;
+			}
+
+			//Update checkout summary information
 			item_count++;
 			subtotal += read_item->price;
 		}
+	}
+
+	//Update checkout table
+	for (int i=0; table_rows[i].itemID != NULL; i++) {
+		addCheckoutItem(checkout_store, table_rows[i].quantity, table_rows[i].description, table_rows[i].price);
 	}
 
 	//Update checkout summary information
