@@ -12,7 +12,7 @@ LDFLAGS_TX = -lwiringPi
 
 # Source files
 RFID_SRC = DB_utils.c checkout_utils.c RFID_Utils.c sqlite3.c 
-GUI_SRC = gui_utils.c tagsense1.c
+GUI_SRC = tagsense1.c
 TX_SRC = ../../rc-switch/RCSwitch.cpp tx.cpp
 
 # Object files
