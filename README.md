@@ -1,2 +1,4 @@
-# RFID-Read-Sequence
-A Custom RFID read sequence for the Sparkfun RFID reader. Using the ThinkMagic Mercury API to read tags on a Raspberry PI
+# TagSense
+### An RFID Smart Tag and Checkout System
+
+You can check out the technical documentation of the project [here](./TagSense.pdf). It has a comprehensive breakdown of the process and the technical implementation of the project.
